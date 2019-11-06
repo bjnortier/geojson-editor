@@ -1,0 +1,58 @@
+{
+  "name": "geojson-editor",
+  "version": "0.1.0",
+  "description": "React GeoJSON editor",
+  "main": "lib/index.js",
+  "scripts": {
+    "test:lint": "eslint --fix src test",
+    "test:functional": "cd test/functional && webpack-dev-server",
+    "test": "npm run test:lint",
+    "compile": "babel --optional runtime -d lib/ src/",
+    "prepublishOnly": "npm audit && rimraf lib/ && npm run compile"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/bjnortier/geojson-editor.git"
+  },
+  "author": "Ben Nortier <ben@bjnortier.com>",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/bjnortier/geojson-editor/issues"
+  },
+  "homepage": "https://github.com/bjnortier/geojson-editor#readme",
+  "peerDependencies": {
+    "react": "16.x",
+    "prop-types": "15.x",
+    "styled-components": "4.x",
+    "styled-normalize": "8.x"
+  },
+  "devDependencies": {
+    "@babel/cli": "^7.5.5",
+    "@babel/core": "^7.5.5",
+    "@babel/preset-env": "^7.5.5",
+    "@babel/preset-react": "^7.0.0",
+    "babel-loader": "^8.0.2",
+    "eslint": "^6.5.1",
+    "eslint-config-standard": "^14.1.0",
+    "eslint-config-standard-react": "^9.2.0",
+    "eslint-plugin-babel": "^5.3.0",
+    "eslint-plugin-import": "^2.18.2",
+    "eslint-plugin-node": "^10.0.0",
+    "eslint-plugin-promise": "^4.2.1",
+    "eslint-plugin-react": "^7.16.0",
+    "eslint-plugin-standard": "^4.0.1",
+    "html-webpack-plugin": "^3.2.0",
+    "opn": "^5.4.0",
+    "prop-types": "^15.6.2",
+    "react": "^16.5.0",
+    "react-dom": "^16.5.0",
+    "react-router-dom": "^4.3.1",
+    "rimraf": "^2.6.2",
+    "styled-components": "^4.1.3",
+    "styled-normalize": "^8.0.4",
+    "webpack": "^4.17.2",
+    "webpack-cli": "^3.3.6",
+    "webpack-dev-server": "^3.7.2"
+  },
+  "dependencies": {}
+}
