@@ -3,6 +3,7 @@ import styled from 'styled-components'
 import { Button, HSpace } from 'minimui'
 
 import { Toolbar, MapType, CreatPolygonTool } from './tools'
+import Polygon from './Polygon'
 
 const { maps } = window.google
 
@@ -27,13 +28,14 @@ class Editor extends Component {
     this.state = {
       mapType: 'satellite',
       mode: 'navigating',
-      currentArea: null,
-      areas: []
+      polygons: [],
+      currentPolygon: null
     }
     this.mapRef = React.createRef()
     this.handleKeyUp = this.handleKeyUp.bind(this)
     this.handleMouseMove = this.handleMouseMove.bind(this)
     this.handleClick = this.handleClick.bind(this)
+    this.handleMarkerClick = this.handleMarkerClick.bind(this)
     this.handleClose = this.handleClose.bind(this)
     this.handleCancel = this.handleCancel.bind(this)
   }
@@ -56,115 +58,75 @@ class Editor extends Component {
   }
 
   handleMouseMove (e) {
-    const { mode, currentArea } = this.state
-    if (mode === 'drawing-area') {
-      if (!currentArea) {
-        const polygon = this.createPolygon(e.latLng)
-        this.setState({ currentArea: { polygon, markers: [] } })
+    const { mode, currentPolygon } = this.state
+    if (mode === 'drawing-polygon') {
+      if (!currentPolygon) {
+        const currentPolygon = new Polygon(this.map, e.latLng)
+        currentPolygon.on('polygonMouseMove', this.handleMouseMove)
+        currentPolygon.on('polygonClick', this.handleClick)
+        currentPolygon.on('markerClick', this.handleMarkerClick)
+        this.setState({ currentPolygon })
       } else {
-        const path = currentArea.polygon.getPaths().getAt(0)
-        path.setAt(path.getLength() - 1, e.latLng)
+        currentPolygon.updateLast(e.latLng)
       }
     }
   }
 
   handleClick (e) {
-    const { mode, currentArea: currentArea0 } = this.state
-    if (mode === 'drawing-area' && currentArea0) {
-      const path = currentArea0.polygon.getPaths().getAt(0)
-      path.push(e.latLng)
-      const marker = this.createMarker(path.getLength() - 2, e.latLng)
-      const markers1 = currentArea0.markers.slice()
-      markers1.push(marker)
-      const currentArea1 = { polygon: currentArea0.polygon, markers: markers1 }
-      this.setState({ currentArea: currentArea1 })
+    const { mode, currentPolygon } = this.state
+    if (mode === 'drawing-polygon' && currentPolygon) {
+      currentPolygon.addCoordinate(e.latLng)
+      // Trigger a state change so the "Finish" button will be
+      // rendered
+      this.setState({ currentPolygon })
     }
   }
 
   handleCancel () {
-    const { currentArea } = this.state
-    if (currentArea) {
-      maps.event.clearInstanceListeners(currentArea.polygon)
-      currentArea.polygon.setMap(null)
-      currentArea.markers.forEach(m => {
-        maps.event.clearInstanceListeners(m)
-        m.setMap(null)
-      })
+    const { currentPolygon } = this.state
+    if (currentPolygon) {
+      currentPolygon.remove()
     }
 
     this.setState({
       mode: 'navigating',
-      currentArea: null
+      currentPolygon: null
     })
   }
 
   handleKeyUp (e) {
     const { mode } = this.state
     // ESC cancels
-    if (mode === 'drawing-area' && e.keyCode === 27) {
+    if (mode === 'drawing-polygon' && e.keyCode === 27) {
       this.handleCancel()
     }
   }
 
+  handleMarkerClick (e, index) {
+    if (index === 0) {
+      this.handleClose()
+    }
+  }
+
   handleClose () {
-    const { currentArea, areas: areas0 } = this.state
-    const path = currentArea.polygon.getPaths().getAt(0)
-    if (path.getLength() > 3) {
-      path.removeAt(path.getLength() - 1)
-      currentArea.polygon.cursor = null
-      const areas1 = areas0.slice()
-      areas1.push(currentArea)
+    const { currentPolygon, polygons: polygons0 } = this.state
+    if (currentPolygon.canClose()) {
+      currentPolygon.close()
+      const polygons1 = polygons0.slice()
+      polygons1.push(currentPolygon)
       this.setState({
         mode: 'navigating',
-        currentArea: null,
-        areas: areas1
+        currentPolygon: null,
+        polygons: polygons1
       })
     }
   }
 
-  createPolygon (latLng) {
-    const polygon = new maps.Polygon({
-      paths: [[latLng]],
-      strokeColor: '#fff',
-      strokeOpacity: 0.5,
-      strokeWeight: 1,
-      fillColor: 'yellow',
-      fillOpacity: 0.1,
-      cursor: 'crosshair'
-    })
-    polygon.addListener('click', this.handleClick)
-    polygon.addListener('mousemove', this.handleMouseMove)
-    polygon.setMap(this.map)
-    return polygon
-  }
-
-  createMarker (index, latLng) {
-    const marker = new maps.Marker({
-      position: latLng,
-      sName: 'coordinate-0',
-      map: this.map,
-      cursor: index === 0 ? 'pointer' : 'crosshair',
-      icon: {
-        path: maps.SymbolPath.CIRCLE,
-        scale: 3,
-        fillColor: 'green',
-        fillOpacity: 1,
-        strokeColor: '#fff',
-        strokeWeight: 1
-      }
-    })
-    if (index === 0) {
-      marker.addListener('click', this.handleClose)
-    }
-    marker.addListener('mousemove', this.handleMouseMove)
-    return marker
-  }
-
   render () {
-    const { mapType, mode, currentArea } = this.state
+    const { mapType, mode, currentPolygon } = this.state
     return (
       <Main onKeyUp={this.handleKeyUp}>
-        <MapDiv ref={this.mapRef} drawing={mode === 'drawing-area'} />
+        <MapDiv ref={this.mapRef} drawing={mode === 'drawing-polygon'} />
         <Toolbar>
           <MapType
             mapType={mapType} onChangeMapType={(e, mapType) => {
@@ -174,16 +136,15 @@ class Editor extends Component {
           />
           <CreatPolygonTool
             onClick={() => this.setState({
-              mode: 'drawing-area'
+              mode: 'drawing-polygon'
             })}
             disabled={mode !== 'navigating'}
           />
-          {mode === 'drawing-area'
+          {mode === 'drawing-polygon'
             ? (
               <>
                 <Button secondary label='Cancel' onClick={this.handleCancel} />
-                {currentArea &&
-                currentArea.polygon.getPaths().getAt(0).getLength() > 3
+                {currentPolygon && currentPolygon.canClose()
                   ? <><HSpace /><Button secondary label='Finish' onClick={this.handleClose} /></>
                   : null}
               </>
