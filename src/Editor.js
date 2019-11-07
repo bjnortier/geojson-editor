@@ -194,7 +194,7 @@ class Editor extends Component {
                 <Button secondary label='Cancel' onClick={this.handleCancel} />
                 {currentArea &&
                 currentArea.polygon.getPaths().getAt(0).getLength() > 3
-                  ? <><HSpace /><Button secondary label='Close' onClick={this.handleClose} /></>
+                  ? <><HSpace /><Button secondary label='Finish' onClick={this.handleClose} /></>
                   : null}
               </div>
               <div className='spacer' />
