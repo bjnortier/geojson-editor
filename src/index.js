@@ -1,7 +1,7 @@
 import React from 'react'
 
-const Index = () => (
-  <div>I am an editor</div>
-)
+import Editor from './Editor'
+
+const Index = () => <Editor />
 
 export default Index
