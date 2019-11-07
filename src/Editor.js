@@ -85,6 +85,9 @@ class Editor extends Component {
   handleCancel () {
     const { currentPolygon } = this.state
     if (currentPolygon) {
+      currentPolygon.off('polygonMouseMove', this.handleMouseMove)
+      currentPolygon.off('polygonClick', this.handleClick)
+      currentPolygon.off('markerClick', this.handleMarkerClick)
       currentPolygon.remove()
     }
 
@@ -111,6 +114,9 @@ class Editor extends Component {
   handleClose () {
     const { currentPolygon, polygons: polygons0 } = this.state
     if (currentPolygon.canClose()) {
+      currentPolygon.off('polygonMouseMove', this.handleMouseMove)
+      currentPolygon.off('polygonClick', this.handleClick)
+      currentPolygon.off('markerClick', this.handleMarkerClick)
       currentPolygon.close()
       const polygons1 = polygons0.slice()
       polygons1.push(currentPolygon)
