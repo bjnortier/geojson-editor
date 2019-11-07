@@ -22,6 +22,17 @@ const MapDiv = styled.div`
   }
 `
 
+const colorSchemes = {
+  satellite: {
+    strokeColor: '#fff',
+    fillColor: '#6c6'
+  },
+  terrain: {
+    strokeColor: '#000',
+    fillColor: '#6a6'
+  }
+}
+
 class Editor extends Component {
   constructor (props) {
     super(props)
@@ -38,6 +49,7 @@ class Editor extends Component {
     this.handleMarkerClick = this.handleMarkerClick.bind(this)
     this.handleClose = this.handleClose.bind(this)
     this.handleCancel = this.handleCancel.bind(this)
+    this.handleChangeMapType = this.handleChangeMapType.bind(this)
   }
 
   componentDidMount () {
@@ -58,10 +70,10 @@ class Editor extends Component {
   }
 
   handleMouseMove (e) {
-    const { mode, currentPolygon } = this.state
+    const { mapType, mode, currentPolygon } = this.state
     if (mode === 'drawing-polygon') {
       if (!currentPolygon) {
-        const currentPolygon = new Polygon(this.map, e.latLng)
+        const currentPolygon = new Polygon(this.map, e.latLng, colorSchemes[mapType])
         currentPolygon.on('polygonMouseMove', this.handleMouseMove)
         currentPolygon.on('polygonClick', this.handleClick)
         currentPolygon.on('markerClick', this.handleMarkerClick)
@@ -111,6 +123,16 @@ class Editor extends Component {
     }
   }
 
+  handleChangeMapType (e, mapType) {
+    const { currentPolygon, polygons } = this.state
+    if (currentPolygon) {
+      currentPolygon.setColorScheme(colorSchemes[mapType])
+    }
+    polygons.forEach(polygon => polygon.setColorScheme(colorSchemes[mapType]))
+    this.map.setMapTypeId(mapType)
+    this.setState({ mapType })
+  }
+
   handleClose () {
     const { currentPolygon, polygons: polygons0 } = this.state
     if (currentPolygon.canClose()) {
@@ -135,10 +157,7 @@ class Editor extends Component {
         <MapDiv ref={this.mapRef} drawing={mode === 'drawing-polygon'} />
         <Toolbar>
           <MapType
-            mapType={mapType} onChangeMapType={(e, mapType) => {
-              this.map.setMapTypeId(mapType)
-              this.setState({ mapType })
-            }}
+            mapType={mapType} onChangeMapType={this.handleChangeMapType}
           />
           <CreatPolygonTool
             onClick={() => this.setState({

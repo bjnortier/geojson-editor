@@ -3,17 +3,17 @@ import EventEmitter from 'events'
 const { maps } = window.google
 
 export default class Polygon extends EventEmitter {
-  constructor (map, latLng) {
+  constructor (map, latLng, colorScheme) {
     super()
     this.map = map
+    this.colorScheme = colorScheme
     const polygon = new maps.Polygon({
       paths: [[latLng]],
-      strokeColor: '#fff',
       strokeOpacity: 0.5,
       strokeWeight: 1,
-      fillColor: 'yellow',
       fillOpacity: 0.1,
-      cursor: 'crosshair'
+      cursor: 'crosshair',
+      ...this.colorScheme
     })
 
     polygon.addListener('click', e => this.emit('polygonClick', e))
@@ -48,18 +48,21 @@ export default class Polygon extends EventEmitter {
       sName: 'coordinate-0',
       map: this.map,
       cursor: index === 0 ? 'pointer' : 'crosshair',
-      icon: {
-        path: maps.SymbolPath.CIRCLE,
-        scale: 3,
-        fillColor: 'green',
-        fillOpacity: 1,
-        strokeColor: '#fff',
-        strokeWeight: 1
-      }
+      icon: this.createIcon()
     })
     this.mapMarkers.push(marker)
     marker.addListener('click', e => this.emit('markerClick', e, index))
     marker.addListener('mousemove', e => this.emit('markerMouseMove', e, index))
+  }
+
+  createIcon () {
+    return {
+      path: maps.SymbolPath.CIRCLE,
+      scale: 3,
+      fillOpacity: 1,
+      strokeWeight: 1,
+      ...this.colorScheme
+    }
   }
 
   canClose () {
@@ -71,5 +74,13 @@ export default class Polygon extends EventEmitter {
     const path = this.mapPolygon.getPaths().getAt(0)
     path.removeAt(path.getLength() - 1)
     this.mapPolygon.cursor = 'pointer'
+  }
+
+  setColorScheme (colorScheme) {
+    this.colorScheme = colorScheme
+    this.mapPolygon.setOptions(colorScheme)
+    this.mapMarkers.forEach(marker => {
+      marker.setIcon(this.createIcon())
+    })
   }
 }
