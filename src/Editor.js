@@ -21,22 +21,6 @@ const MapDiv = styled.div`
   }
 `
 
-const Instructions = styled.div`
-  position: absolute;
-  top: 8px;
-  left: 8px;
-  right: 8px;
-  padding: 4px;
-  display: flex;
-  pointer-events: none;
-  > .spacer {
-    flex-grow: 1;
-  }
-  .buttons {
-    pointer-events: auto;
-  }
-`
-
 class Editor extends Component {
   constructor (props) {
     super(props)
@@ -99,12 +83,15 @@ class Editor extends Component {
 
   handleCancel () {
     const { currentArea } = this.state
-    maps.event.clearInstanceListeners(currentArea.polygon)
-    currentArea.polygon.setMap(null)
-    currentArea.markers.forEach(m => {
-      maps.event.clearInstanceListeners(m)
-      m.setMap(null)
-    })
+    if (currentArea) {
+      maps.event.clearInstanceListeners(currentArea.polygon)
+      currentArea.polygon.setMap(null)
+      currentArea.markers.forEach(m => {
+        maps.event.clearInstanceListeners(m)
+        m.setMap(null)
+      })
+    }
+
     this.setState({
       mode: 'navigating',
       currentArea: null
@@ -191,22 +178,19 @@ class Editor extends Component {
             })}
             disabled={mode !== 'navigating'}
           />
-        </Toolbar>
-        {mode === 'drawing-area'
-          ? (
-            <Instructions>
-              <div className='spacer' />
-              <div className='buttons'>
+          {mode === 'drawing-area'
+            ? (
+              <>
                 <Button secondary label='Cancel' onClick={this.handleCancel} />
                 {currentArea &&
                 currentArea.polygon.getPaths().getAt(0).getLength() > 3
                   ? <><HSpace /><Button secondary label='Finish' onClick={this.handleClose} /></>
                   : null}
-              </div>
-              <div className='spacer' />
-            </Instructions>
-          )
-          : null}
+              </>
+            )
+            : null}
+        </Toolbar>
+
       </Main>
     )
   }
