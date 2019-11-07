@@ -2,7 +2,7 @@ import React, { Component } from 'react'
 import styled from 'styled-components'
 import { Button, HSpace } from 'minimui'
 
-import { Toolbar, CreatPolygonTool } from './tools'
+import { Toolbar, MapType, CreatPolygonTool } from './tools'
 
 const { maps } = window.google
 
@@ -41,6 +41,7 @@ class Editor extends Component {
   constructor (props) {
     super(props)
     this.state = {
+      mapType: 'satellite',
       mode: 'navigating',
       currentArea: null,
       areas: []
@@ -57,9 +58,8 @@ class Editor extends Component {
     const map = new maps.Map(this.mapRef.current, {
       zoom: 3,
       center: new maps.LatLng(0, 0),
-      mapTypeId: 'satellite',
-      disableDefaultUI: true,
-      mapTypeControl: false
+      mapTypeId: this.state.mapType,
+      disableDefaultUI: true
     })
 
     map.addListener('mousemove', this.handleMouseMove)
@@ -174,11 +174,17 @@ class Editor extends Component {
   }
 
   render () {
-    const { mode, currentArea } = this.state
+    const { mapType, mode, currentArea } = this.state
     return (
       <Main onKeyUp={this.handleKeyUp}>
         <MapDiv ref={this.mapRef} drawing={mode === 'drawing-area'} />
         <Toolbar>
+          <MapType
+            mapType={mapType} onChangeMapType={(e, mapType) => {
+              this.map.setMapTypeId(mapType)
+              this.setState({ mapType })
+            }}
+          />
           <CreatPolygonTool
             onClick={() => this.setState({
               mode: 'drawing-area'

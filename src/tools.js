@@ -3,17 +3,28 @@ import PropTypes from 'prop-types'
 import styled from 'styled-components'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { faDrawPolygon } from '@fortawesome/free-solid-svg-icons'
+import { Select } from 'minimui'
 
 export const Toolbar = styled.div`
   position: absolute;
   top: 8px;
-  right: 8px;
+  left: 8px;
   padding: 8px;
   background-color: white;
   border-radius: 4px;
+  > div > div {
+    padding-bottom: 0;
+  }
+  > div {
+    margin-left: 4px;
+  }
+  > div:first-child {
+    margin-left: 0;
+  }
 `
 
 const ToolButton = styled.div`
+  display: inline-block;
   width: 20px;
   height: 20px;
   font-size: 20px;
@@ -54,4 +65,16 @@ CreatPolygonTool.propTypes = {
 
 CreatPolygonTool.defaultProps = {
   disabled: false
+}
+
+export const MapType = ({ mapType, onChangeMapType }) => (
+  <Select value={mapType} onChange={onChangeMapType}>
+    <option value='satellite'>Satellite</option>
+    <option value='terrain'>Terrain</option>
+  </Select>
+)
+
+MapType.propTypes = {
+  mapType: PropTypes.string.isRequired,
+  onChangeMapType: PropTypes.func.isRequired
 }
