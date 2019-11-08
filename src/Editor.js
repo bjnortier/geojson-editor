@@ -1,8 +1,9 @@
 import React, { Component } from 'react'
 import styled from 'styled-components'
 import { Button, HSpace } from 'minimui'
+import { union } from 'lodash'
 
-import { Toolbar, MapType, CreatPolygonTool } from './tools'
+import { Toolbar, MapType, CreatPolygonTool, DeleteTool } from './tools'
 import Polygon from './Polygon'
 
 const { maps } = window.google
@@ -30,6 +31,16 @@ const colorSchemes = {
   terrain: {
     strokeColor: '#000',
     fillColor: '#6a6'
+  },
+  selected: {
+    satellite: {
+      strokeColor: '#fff',
+      fillColor: 'yellow'
+    },
+    terrain: {
+      strokeColor: '#000',
+      fillColor: 'yellow'
+    }
   }
 }
 
@@ -40,6 +51,7 @@ class Editor extends Component {
       mapType: 'satellite',
       mode: 'navigating',
       polygons: [],
+      selected: [],
       currentPolygon: null
     }
     this.mapRef = React.createRef()
@@ -50,6 +62,8 @@ class Editor extends Component {
     this.handleClose = this.handleClose.bind(this)
     this.handleCancel = this.handleCancel.bind(this)
     this.handleChangeMapType = this.handleChangeMapType.bind(this)
+    this.handlePolygonClick = this.handlePolygonClick.bind(this)
+    this.handleDelete = this.handleDelete.bind(this)
   }
 
   componentDidMount () {
@@ -85,12 +99,23 @@ class Editor extends Component {
   }
 
   handleClick (e) {
-    const { mode, currentPolygon } = this.state
+    const { mode, currentPolygon, polygons, selected: selected0, mapType } = this.state
     if (mode === 'drawing-polygon' && currentPolygon) {
       currentPolygon.addCoordinate(e.latLng)
       // Trigger a state change so the "Finish" button will be
       // rendered
       this.setState({ currentPolygon })
+    } else if (mode === 'navigating') {
+      if (selected0.length) {
+        polygons.forEach((polygon, i) => {
+          if (selected0.indexOf(i) !== -1) {
+            polygon.setColorScheme(colorSchemes[mapType])
+          }
+        })
+        this.setState({
+          selected: []
+        })
+      }
     }
   }
 
@@ -124,11 +149,17 @@ class Editor extends Component {
   }
 
   handleChangeMapType (e, mapType) {
-    const { currentPolygon, polygons } = this.state
+    const { currentPolygon, polygons, selected } = this.state
     if (currentPolygon) {
       currentPolygon.setColorScheme(colorSchemes[mapType])
     }
-    polygons.forEach(polygon => polygon.setColorScheme(colorSchemes[mapType]))
+    polygons.forEach((polygon, i) => {
+      if (selected.indexOf(i) === -1) {
+        polygon.setColorScheme(colorSchemes[mapType])
+      } else {
+        polygon.setColorScheme(colorSchemes.selected[mapType])
+      }
+    })
     this.map.setMapTypeId(mapType)
     this.setState({ mapType })
   }
@@ -140,6 +171,8 @@ class Editor extends Component {
       currentPolygon.off('polygonClick', this.handleClick)
       currentPolygon.off('markerClick', this.handleMarkerClick)
       currentPolygon.close()
+
+      currentPolygon.on('polygonClick', this.handlePolygonClick)
       const polygons1 = polygons0.slice()
       polygons1.push(currentPolygon)
       this.setState({
@@ -150,8 +183,51 @@ class Editor extends Component {
     }
   }
 
+  handlePolygonClick (e, p) {
+    const { mode, polygons, selected: selected0, mapType } = this.state
+    if (mode === 'navigating') {
+      let index
+      polygons.forEach((polygon, i) => {
+        if (polygon === p) {
+          index = i
+        }
+      })
+      if (index === undefined) {
+        console.error('clicked polygon not found')
+      } else {
+        const selected1 = event.shiftKey ? union(selected0, [index]) : [index]
+        polygons.forEach((polygon, i) => {
+          if (selected1.indexOf(i) !== -1) {
+            polygon.setColorScheme(colorSchemes.selected[mapType])
+          } else {
+            polygon.setColorScheme(colorSchemes[mapType])
+          }
+        })
+        this.setState({
+          selected: selected1
+        })
+      }
+    }
+  }
+
+  handleDelete () {
+    const { polygons: polygons0, selected } = this.state
+    const polygons1 = polygons0.reduce((acc, polygon, i) => {
+      if (selected.indexOf(i) !== -1) {
+        polygon.remove()
+      } else {
+        acc.push(polygon)
+      }
+      return acc
+    }, [])
+    this.setState({
+      polygons: polygons1,
+      selected: []
+    })
+  }
+
   render () {
-    const { mapType, mode, currentPolygon } = this.state
+    const { mapType, mode, currentPolygon, selected } = this.state
     return (
       <Main onKeyUp={this.handleKeyUp}>
         <MapDiv ref={this.mapRef} drawing={mode === 'drawing-polygon'} />
@@ -164,6 +240,10 @@ class Editor extends Component {
               mode: 'drawing-polygon'
             })}
             disabled={mode !== 'navigating'}
+          />
+          <DeleteTool
+            onClick={this.handleDelete}
+            disabled={selected.length === 0}
           />
           {mode === 'drawing-polygon'
             ? (

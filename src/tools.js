@@ -2,7 +2,7 @@ import React from 'react'
 import PropTypes from 'prop-types'
 import styled from 'styled-components'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
-import { faDrawPolygon } from '@fortawesome/free-solid-svg-icons'
+import { faDrawPolygon, faTrashAlt } from '@fortawesome/free-solid-svg-icons'
 import { Select } from 'minimui'
 
 export const Toolbar = styled.div`
@@ -52,6 +52,18 @@ Tool.propTypes = {
   children: PropTypes.oneOfType([PropTypes.array, PropTypes.object]).isRequired
 }
 
+export const MapType = ({ mapType, onChangeMapType }) => (
+  <Select value={mapType} onChange={onChangeMapType}>
+    <option value='satellite'>Satellite</option>
+    <option value='terrain'>Terrain</option>
+  </Select>
+)
+
+MapType.propTypes = {
+  mapType: PropTypes.string.isRequired,
+  onChangeMapType: PropTypes.func.isRequired
+}
+
 export const CreatPolygonTool = ({ onClick, disabled }) => (
   <Tool onClick={onClick} disabled={disabled}>
     <FontAwesomeIcon icon={faDrawPolygon} />
@@ -67,14 +79,17 @@ CreatPolygonTool.defaultProps = {
   disabled: false
 }
 
-export const MapType = ({ mapType, onChangeMapType }) => (
-  <Select value={mapType} onChange={onChangeMapType}>
-    <option value='satellite'>Satellite</option>
-    <option value='terrain'>Terrain</option>
-  </Select>
+export const DeleteTool = ({ onClick, disabled }) => (
+  <Tool onClick={onClick} disabled={disabled}>
+    <FontAwesomeIcon icon={faTrashAlt} />
+  </Tool>
 )
 
-MapType.propTypes = {
-  mapType: PropTypes.string.isRequired,
-  onChangeMapType: PropTypes.func.isRequired
+DeleteTool.propTypes = {
+  onClick: PropTypes.func.isRequired,
+  disabled: PropTypes.bool.isRequired
+}
+
+DeleteTool.defaultProps = {
+  disabled: true
 }

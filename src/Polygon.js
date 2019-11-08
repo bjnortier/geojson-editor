@@ -15,15 +15,16 @@ export default class Polygon extends EventEmitter {
       cursor: 'crosshair',
       ...this.colorScheme
     })
-
-    polygon.addListener('click', e => this.emit('polygonClick', e))
-    polygon.addListener('mousemove', e => this.emit('polygonMouseMove', e))
+    map.addListener('click', e => this.emit('mapClick', e, this))
+    polygon.addListener('click', e => this.emit('polygonClick', e, this))
+    polygon.addListener('mousemove', e => this.emit('polygonMouseMove', e, this))
     polygon.setMap(this.map)
     this.mapPolygon = polygon
     this.mapMarkers = []
   }
 
   remove () {
+    maps.event.clearInstanceListeners(this.map)
     maps.event.clearInstanceListeners(this.mapPolygon)
     this.mapPolygon.setMap(null)
     this.mapMarkers.forEach(marker => {
