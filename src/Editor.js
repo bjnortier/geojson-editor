@@ -14,6 +14,17 @@ const Main = styled.div`
   position: relative;
 `
 
+const Controls = styled.div`
+  display: inline-block;
+  padding: 4px;
+  > div {
+    padding: 4px;
+  }
+  > div:first-child {
+    padding-left: 0;
+  }
+`
+
 const MapDiv = styled.div`
   width: 100%;
   height: 100%;
@@ -60,6 +71,7 @@ class Editor extends Component {
     this.handleClick = this.handleClick.bind(this)
     this.handleMarkerClick = this.handleMarkerClick.bind(this)
     this.handleClose = this.handleClose.bind(this)
+    this.handleUndo = this.handleUndo.bind(this)
     this.handleCancel = this.handleCancel.bind(this)
     this.handleChangeMapType = this.handleChangeMapType.bind(this)
     this.handlePolygonClick = this.handlePolygonClick.bind(this)
@@ -133,7 +145,8 @@ class Editor extends Component {
   }
 
   handleMarkerClick (e, index) {
-    if (index === 0) {
+    const { currentPolygon } = this.state
+    if (index === 0 && currentPolygon.canClose()) {
       this.handleClose()
     }
   }
@@ -154,23 +167,26 @@ class Editor extends Component {
     this.setState({ mapType })
   }
 
+  handleUndo () {
+    const { currentPolygon } = this.state
+    currentPolygon.undo()
+  }
+
   handleClose () {
     const { currentPolygon, polygons: polygons0 } = this.state
-    if (currentPolygon.canClose()) {
-      currentPolygon.off('polygonMouseMove', this.handleMouseMove)
-      currentPolygon.off('polygonClick', this.handleClick)
-      currentPolygon.off('markerClick', this.handleMarkerClick)
-      currentPolygon.close()
+    currentPolygon.off('polygonMouseMove', this.handleMouseMove)
+    currentPolygon.off('polygonClick', this.handleClick)
+    currentPolygon.off('markerClick', this.handleMarkerClick)
+    currentPolygon.close()
 
-      currentPolygon.on('polygonClick', this.handlePolygonClick)
-      const polygons1 = polygons0.slice()
-      polygons1.push(currentPolygon)
-      this.setState({
-        mode: 'navigating',
-        currentPolygon: null,
-        polygons: polygons1
-      })
-    }
+    currentPolygon.on('polygonClick', this.handlePolygonClick)
+    const polygons1 = polygons0.slice()
+    polygons1.push(currentPolygon)
+    this.setState({
+      mode: 'navigating',
+      currentPolygon: null,
+      polygons: polygons1
+    })
   }
 
   handlePolygonClick (e, p) {
@@ -222,32 +238,38 @@ class Editor extends Component {
       <Main onKeyUp={this.handleKeyUp}>
         <MapDiv ref={this.mapRef} drawing={mode === 'drawing-polygon'} />
         <Toolbar>
-          <MapType
-            mapType={mapType} onChangeMapType={this.handleChangeMapType}
-          />
-          <CreatPolygonTool
-            onClick={() => {
-              const currentPolygon = new Polygon(this.map, [new maps.LatLng({ lat: 0, lng: 0 })], colorSchemes[mapType])
-              currentPolygon.on('polygonMouseMove', this.handleMouseMove)
-              currentPolygon.on('polygonClick', this.handleClick)
-              currentPolygon.on('markerClick', this.handleMarkerClick)
-              this.setState({
-                mode: 'drawing-polygon',
-                currentPolygon
-              })
-            }}
-            disabled={mode !== 'navigating'}
-          />
-          <DeleteTool
-            onClick={this.handleDelete}
-            disabled={selected.length === 0}
-          />
+          <Controls>
+            <MapType
+              mapType={mapType} onChangeMapType={this.handleChangeMapType}
+            />
+            <CreatPolygonTool
+              onClick={() => {
+                const currentPolygon = new Polygon(this.map, [new maps.LatLng({ lat: 0, lng: 0 })], colorSchemes[mapType])
+                currentPolygon.on('polygonMouseMove', this.handleMouseMove)
+                currentPolygon.on('polygonClick', this.handleClick)
+                currentPolygon.on('markerClick', this.handleMarkerClick)
+                this.setState({
+                  mode: 'drawing-polygon',
+                  currentPolygon
+                })
+              }}
+              disabled={mode !== 'navigating'}
+            />
+            <DeleteTool
+              onClick={this.handleDelete}
+              disabled={selected.length === 0}
+            />
+          </Controls>
           {mode === 'drawing-polygon'
             ? (
               <>
+                <HSpace />
+                {currentPolygon && currentPolygon.canUndo()
+                  ? <Button secondary label='Undo' onClick={this.handleUndo} />
+                  : null}
                 <Button secondary label='Cancel' onClick={this.handleCancel} />
                 {currentPolygon && currentPolygon.canClose()
-                  ? <><HSpace /><Button secondary label='Finish' onClick={this.handleClose} /></>
+                  ? <Button secondary label='Finish' onClick={this.handleClose} />
                   : null}
               </>
             )

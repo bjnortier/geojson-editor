@@ -12,6 +12,7 @@ export const Toolbar = styled.div`
   padding: 8px;
   background-color: white;
   border-radius: 4px;
+  height: 40px;
   > div > div {
     padding-bottom: 0;
   }

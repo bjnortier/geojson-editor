@@ -75,6 +75,21 @@ export default class Polygon extends EventEmitter {
     this.mapPolygon.cursor = 'pointer'
   }
 
+  canUndo () {
+    const path = this.mapPolygon.getPaths().getAt(0)
+    return path.getLength() > 1
+  }
+
+  undo () {
+    const path = this.mapPolygon.getPaths().getAt(0)
+    path.setAt(path.length - 2, path.getAt(path.length - 1))
+    path.removeAt(path.length - 1)
+
+    const lastMarker = this.mapMarkers[path.length - 1]
+    maps.event.clearInstanceListeners(lastMarker)
+    lastMarker.setMap(null)
+  }
+
   setColorScheme (colorScheme) {
     this.colorScheme = colorScheme
     this.mapPolygon.setOptions(colorScheme)
