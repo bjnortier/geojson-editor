@@ -5,6 +5,7 @@ import { union } from 'lodash'
 
 import { Toolbar, MapType, CreatPolygonTool, DeleteTool } from './tools'
 import EditingPolygon from './EditingPolygon'
+import FinishedPolygon from './FinishedPolygon'
 
 const { maps } = window.google
 
@@ -40,9 +41,9 @@ class Editor extends Component {
     this.state = {
       mapType: 'satellite',
       mode: 'navigating',
-      polygons: [],
-      selected: [],
-      editingPolygon: null
+      finishedPolygons: [],
+      editingPolygon: null,
+      selected: []
     }
     this.mapRef = React.createRef()
     this.handleKeyUp = this.handleKeyUp.bind(this)
@@ -66,11 +67,20 @@ class Editor extends Component {
     })
     map.addListener('click', this.handleClick)
     this.map = map
+    this.addPolygon([{ lat: 0, lng: 0 }, { lat: 10, lng: 0 }, { lat: 10, lng: 10 }, { lat: 0, lng: 10 }])
   }
 
   componentWillUnmount () {
     document.addEventListener('keyup', this.handleKeyUp)
     maps.event.clearInstanceListeners(this.map)
+  }
+
+  addPolygon (path) {
+    const { mapType, finishedPolygons: finishedPolygons0 } = this.state
+    const polygon = new FinishedPolygon(this.map, path, mapType)
+    const finishedPolygons1 = finishedPolygons0.slice()
+    finishedPolygons1.push(polygon)
+    this.setState({ finishedPolygons: finishedPolygons1 })
   }
 
   handleClick (e) {
@@ -107,17 +117,17 @@ class Editor extends Component {
   }
 
   handleChangeMapType (e, mapType) {
-    const { editingPolygon } = this.state
+    const { editingPolygon, finishedPolygons } = this.state
     if (editingPolygon) {
       editingPolygon.setMapType(mapType)
     }
-    // polygons.forEach((polygon, i) => {
+    finishedPolygons.forEach((polygon, i) => {
     //   if (selected.indexOf(i) === -1) {
-    //     polygon.setColorScheme(colorSchemes[mapType])
+      polygon.setMapType(mapType)
     //   } else {
     //     polygon.setColorScheme(colorSchemes.selected[mapType])
     //   }
-    // })
+    })
     this.map.setMapTypeId(mapType)
     this.setState({ mapType })
   }

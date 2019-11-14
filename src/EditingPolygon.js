@@ -1,5 +1,4 @@
 import EventEmitter from 'events'
-
 const { maps } = window.google
 
 const colorSchemes = {
