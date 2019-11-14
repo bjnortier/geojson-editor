@@ -4,7 +4,7 @@ import { Button, HSpace } from 'minimui'
 import { union } from 'lodash'
 
 import { Toolbar, MapType, CreatPolygonTool, DeleteTool } from './tools'
-import Polygon from './Polygon'
+import EditingPolygon from './EditingPolygon'
 
 const { maps } = window.google
 
@@ -63,7 +63,7 @@ class Editor extends Component {
       mode: 'navigating',
       polygons: [],
       selected: [],
-      currentPolygon: null
+      editingPolygon: null
     }
     this.mapRef = React.createRef()
     this.handleKeyUp = this.handleKeyUp.bind(this)
@@ -96,19 +96,19 @@ class Editor extends Component {
   }
 
   handleMouseMove (e) {
-    const { mode, currentPolygon } = this.state
+    const { mode, editingPolygon } = this.state
     if (mode === 'drawing-polygon') {
-      currentPolygon.updateLast(e.latLng)
+      editingPolygon.updateLast(e.latLng)
     }
   }
 
   handleClick (e) {
-    const { mode, currentPolygon, polygons, selected: selected0, mapType } = this.state
-    if (mode === 'drawing-polygon' && currentPolygon) {
-      currentPolygon.addCoordinate(e.latLng)
+    const { mode, editingPolygon, polygons, selected: selected0, mapType } = this.state
+    if (mode === 'drawing-polygon' && editingPolygon) {
+      editingPolygon.addCoordinate(e.latLng)
       // Trigger a state change so the "Finish" button will be
       // rendered
-      this.setState({ currentPolygon })
+      this.setState({ editingPolygon })
     } else if (mode === 'navigating') {
       if (selected0.length) {
         polygons.forEach((polygon, i) => {
@@ -124,15 +124,15 @@ class Editor extends Component {
   }
 
   handleCancel () {
-    const { currentPolygon } = this.state
-    currentPolygon.off('polygonMouseMove', this.handleMouseMove)
-    currentPolygon.off('polygonClick', this.handleClick)
-    currentPolygon.off('markerClick', this.handleMarkerClick)
-    currentPolygon.remove()
+    const { editingPolygon } = this.state
+    editingPolygon.off('polygonMouseMove', this.handleMouseMove)
+    editingPolygon.off('polygonClick', this.handleClick)
+    editingPolygon.off('markerClick', this.handleMarkerClick)
+    editingPolygon.remove()
 
     this.setState({
       mode: 'navigating',
-      currentPolygon: null
+      editingPolygon: null
     })
   }
 
@@ -145,16 +145,16 @@ class Editor extends Component {
   }
 
   handleMarkerClick (e, index) {
-    const { currentPolygon } = this.state
-    if (index === 0 && currentPolygon.canClose()) {
+    const { editingPolygon } = this.state
+    if (index === 0 && editingPolygon.canClose()) {
       this.handleClose()
     }
   }
 
   handleChangeMapType (e, mapType) {
-    const { currentPolygon, polygons, selected } = this.state
-    if (currentPolygon) {
-      currentPolygon.setColorScheme(colorSchemes[mapType])
+    const { editingPolygon, polygons, selected } = this.state
+    if (editingPolygon) {
+      editingPolygon.setColorScheme(colorSchemes[mapType])
     }
     polygons.forEach((polygon, i) => {
       if (selected.indexOf(i) === -1) {
@@ -168,23 +168,23 @@ class Editor extends Component {
   }
 
   handleUndo () {
-    const { currentPolygon } = this.state
-    currentPolygon.undo()
+    const { editingPolygon } = this.state
+    editingPolygon.undo()
   }
 
   handleClose () {
-    const { currentPolygon, polygons: polygons0 } = this.state
-    currentPolygon.off('polygonMouseMove', this.handleMouseMove)
-    currentPolygon.off('polygonClick', this.handleClick)
-    currentPolygon.off('markerClick', this.handleMarkerClick)
-    currentPolygon.close()
+    const { editingPolygon, polygons: polygons0 } = this.state
+    editingPolygon.off('polygonMouseMove', this.handleMouseMove)
+    editingPolygon.off('polygonClick', this.handleClick)
+    editingPolygon.off('markerClick', this.handleMarkerClick)
+    editingPolygon.close()
 
-    currentPolygon.on('polygonClick', this.handlePolygonClick)
+    editingPolygon.on('polygonClick', this.handlePolygonClick)
     const polygons1 = polygons0.slice()
-    polygons1.push(currentPolygon)
+    polygons1.push(editingPolygon)
     this.setState({
       mode: 'navigating',
-      currentPolygon: null,
+      editingPolygon: null,
       polygons: polygons1
     })
   }
@@ -233,7 +233,7 @@ class Editor extends Component {
   }
 
   render () {
-    const { mapType, mode, currentPolygon, selected } = this.state
+    const { mapType, mode, editingPolygon, selected } = this.state
     return (
       <Main onKeyUp={this.handleKeyUp}>
         <MapDiv ref={this.mapRef} drawing={mode === 'drawing-polygon'} />
@@ -244,13 +244,13 @@ class Editor extends Component {
             />
             <CreatPolygonTool
               onClick={() => {
-                const currentPolygon = new Polygon(this.map, [new maps.LatLng({ lat: 0, lng: 0 })], colorSchemes[mapType])
-                currentPolygon.on('polygonMouseMove', this.handleMouseMove)
-                currentPolygon.on('polygonClick', this.handleClick)
-                currentPolygon.on('markerClick', this.handleMarkerClick)
+                const editingPolygon = new EditingPolygon(this.map, [new maps.LatLng({ lat: 0, lng: 0 })], colorSchemes[mapType])
+                editingPolygon.on('polygonMouseMove', this.handleMouseMove)
+                editingPolygon.on('polygonClick', this.handleClick)
+                editingPolygon.on('markerClick', this.handleMarkerClick)
                 this.setState({
                   mode: 'drawing-polygon',
-                  currentPolygon
+                  editingPolygon
                 })
               }}
               disabled={mode !== 'navigating'}
@@ -264,11 +264,11 @@ class Editor extends Component {
             ? (
               <>
                 <HSpace />
-                {currentPolygon && currentPolygon.canUndo()
+                {editingPolygon && editingPolygon.canUndo()
                   ? <Button secondary label='Undo' onClick={this.handleUndo} />
                   : null}
                 <Button secondary label='Cancel' onClick={this.handleCancel} />
-                {currentPolygon && currentPolygon.canClose()
+                {editingPolygon && editingPolygon.canClose()
                   ? <Button secondary label='Finish' onClick={this.handleClose} />
                   : null}
               </>
