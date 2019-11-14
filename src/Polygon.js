@@ -38,18 +38,10 @@ export default class Polygon extends EventEmitter {
     mapPolygon.setMap(this.map)
     this.mapPolygon = mapPolygon
     this.mapMarkers = []
-
-    this.handleClick = this.handleClick.bind(this)
-    this.listeners = [
-      mapPolygon.addListener('click', this.handleClick)
-    ]
+    this.listeners = []
   }
 
-  handleClick (e) {
-    this.emit('click')
-  }
-
-  addMarker (latLng) {
+  addMarker (latLng, cursor) {
     const marker = new maps.Marker({
       position: latLng,
       sName: 'coordinate-0',
@@ -57,6 +49,7 @@ export default class Polygon extends EventEmitter {
       icon: this.createIcon()
     })
     this.mapMarkers.push(marker)
+    return marker
   }
 
   remove () {

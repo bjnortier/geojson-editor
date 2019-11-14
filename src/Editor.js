@@ -8,6 +8,7 @@ import EditingPolygon from './EditingPolygon'
 import FinishedPolygon from './FinishedPolygon'
 
 const { maps } = window.google
+const { LatLng } = maps
 
 const Main = styled.div`
   width: 100%;
@@ -67,7 +68,12 @@ class Editor extends Component {
     })
     map.addListener('click', this.handleClick)
     this.map = map
-    this.addPolygon([{ lat: 0, lng: 0 }, { lat: 10, lng: 0 }, { lat: 10, lng: 10 }, { lat: 0, lng: 10 }])
+    this.addPolygon([
+      new LatLng({ lat: 0, lng: 0 }),
+      new LatLng({ lat: 10, lng: 0 }),
+      new LatLng({ lat: 10, lng: 10 }),
+      new LatLng({ lat: 0, lng: 10 })
+    ])
   }
 
   componentWillUnmount () {
@@ -142,19 +148,16 @@ class Editor extends Component {
   }
 
   handleClose () {
-    const { editingPolygon, polygons: polygons0 } = this.state
-    const path = editingPolygon.mapPolygon.getPaths().getAt(0)
-    path.removeAt(path.getLength() - 1)
+    const { editingPolygon } = this.state
+    const path = editingPolygon.close().getArray()
     editingPolygon.off('coordinateAdded', this.handleCoordinateAdded)
     editingPolygon.off('close', this.handleClose)
     editingPolygon.remove()
-
-    const polygons1 = polygons0.slice()
     this.setState({
       mode: 'navigating',
-      editingPolygon: null,
-      polygons: polygons1
+      editingPolygon: null
     })
+    this.addPolygon(path)
   }
 
   handlePolygonClick (e, p) {

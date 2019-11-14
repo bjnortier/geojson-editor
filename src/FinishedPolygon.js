@@ -7,5 +7,12 @@ export default class FinishedPolygon extends Polygon {
       const latLng = path[i]
       this.addMarker(latLng)
     }
+
+    this.handleClick = this.handleClick.bind(this)
+    this.listeners.push(this.mapPolygon.addListener('click', this.handleClick))
+  }
+
+  handleClick (e) {
+    this.emit('click', e)
   }
 }
