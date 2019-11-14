@@ -25,9 +25,7 @@ export const Toolbar = styled.div`
 
 const ToolButton = styled.div`
   display: inline-block;
-  width: 30px;
-  height: 30px;
-  font-size: 30px;
+  font-size: 20px;
   padding: 3px;
   cursor: ${({ disabled }) => disabled ? 'inherit' : 'pointer'};
   color: ${({ disabled }) => disabled ? 'grey' : 'black'};

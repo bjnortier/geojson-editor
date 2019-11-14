@@ -84,17 +84,9 @@ class Editor extends Component {
   }
 
   handleMouseMove (e) {
-    const { mapType, mode, currentPolygon } = this.state
+    const { mode, currentPolygon } = this.state
     if (mode === 'drawing-polygon') {
-      if (!currentPolygon) {
-        const currentPolygon = new Polygon(this.map, e.latLng, colorSchemes[mapType])
-        currentPolygon.on('polygonMouseMove', this.handleMouseMove)
-        currentPolygon.on('polygonClick', this.handleClick)
-        currentPolygon.on('markerClick', this.handleMarkerClick)
-        this.setState({ currentPolygon })
-      } else {
-        currentPolygon.updateLast(e.latLng)
-      }
+      currentPolygon.updateLast(e.latLng)
     }
   }
 
@@ -121,12 +113,10 @@ class Editor extends Component {
 
   handleCancel () {
     const { currentPolygon } = this.state
-    if (currentPolygon) {
-      currentPolygon.off('polygonMouseMove', this.handleMouseMove)
-      currentPolygon.off('polygonClick', this.handleClick)
-      currentPolygon.off('markerClick', this.handleMarkerClick)
-      currentPolygon.remove()
-    }
+    currentPolygon.off('polygonMouseMove', this.handleMouseMove)
+    currentPolygon.off('polygonClick', this.handleClick)
+    currentPolygon.off('markerClick', this.handleMarkerClick)
+    currentPolygon.remove()
 
     this.setState({
       mode: 'navigating',
@@ -236,9 +226,16 @@ class Editor extends Component {
             mapType={mapType} onChangeMapType={this.handleChangeMapType}
           />
           <CreatPolygonTool
-            onClick={() => this.setState({
-              mode: 'drawing-polygon'
-            })}
+            onClick={() => {
+              const currentPolygon = new Polygon(this.map, [new maps.LatLng({ lat: 0, lng: 0 })], colorSchemes[mapType])
+              currentPolygon.on('polygonMouseMove', this.handleMouseMove)
+              currentPolygon.on('polygonClick', this.handleClick)
+              currentPolygon.on('markerClick', this.handleMarkerClick)
+              this.setState({
+                mode: 'drawing-polygon',
+                currentPolygon
+              })
+            }}
             disabled={mode !== 'navigating'}
           />
           <DeleteTool
