@@ -2,41 +2,62 @@ import EventEmitter from 'events'
 
 const { maps } = window.google
 
-export default class Polygon extends EventEmitter {
-  constructor (map, path, colorScheme) {
+const colorSchemes = {
+  satellite: {
+    strokeColor: '#fff',
+    fillColor: '#6c6'
+  },
+  terrain: {
+    strokeColor: '#000',
+    fillColor: '#6a6'
+  },
+  selected: {
+    satellite: {
+      strokeColor: '#fff',
+      fillColor: 'yellow'
+    },
+    terrain: {
+      strokeColor: '#000',
+      fillColor: 'yellow'
+    }
+  }
+}
+
+export default class EditingPolygon extends EventEmitter {
+  constructor (map, mapType) {
     super()
     this.map = map
-    this.colorScheme = colorScheme
-    const polygon = new maps.Polygon({
-      paths: [path],
+    this.colorScheme = colorSchemes[mapType]
+    const mapPolygon = new maps.Polygon({
+      paths: [new maps.LatLng({ lat: 0, lng: 0 })],
       strokeOpacity: 0.5,
       strokeWeight: 1,
       fillOpacity: 0.1,
       cursor: 'crosshair',
       ...this.colorScheme
     })
-    polygon.addListener('click', e => this.emit('polygonClick', e, this))
-    polygon.addListener('mousemove', e => this.emit('polygonMouseMove', e, this))
-    polygon.setMap(this.map)
-    this.mapPolygon = polygon
+    mapPolygon.setMap(this.map)
+    this.mapPolygon = mapPolygon
     this.mapMarkers = []
+
+    this.handleMouseMove = this.handleMouseMove.bind(this)
+    this.handleClick = this.handleClick.bind(this)
+    this.handleMarkerClick = this.handleMarkerClick.bind(this)
+    this.listeners = [
+      map.addListener('mousemove', this.handleMouseMove),
+      map.addListener('click', this.handleClick),
+      mapPolygon.addListener('mousemove', this.handleMouseMove),
+      mapPolygon.addListener('click', this.handleClick)
+    ]
   }
 
-  remove () {
-    maps.event.clearInstanceListeners(this.mapPolygon)
-    this.mapPolygon.setMap(null)
-    this.mapMarkers.forEach(marker => {
-      maps.event.clearInstanceListeners(marker)
-      marker.setMap(null)
-    })
-  }
-
-  updateLast (latLng) {
+  handleMouseMove (e) {
     const path = this.mapPolygon.getPaths().getAt(0)
-    path.setAt(path.getLength() - 1, latLng)
+    path.setAt(path.getLength() - 1, e.latLng)
   }
 
-  addCoordinate (latLng) {
+  handleClick (e) {
+    const { latLng } = e
     const path = this.mapPolygon.getPaths().getAt(0)
     path.setAt(path.getLength() - 1, latLng)
     path.push(latLng)
@@ -50,8 +71,24 @@ export default class Polygon extends EventEmitter {
       icon: this.createIcon()
     })
     this.mapMarkers.push(marker)
-    marker.addListener('click', e => this.emit('markerClick', e, index))
-    marker.addListener('mousemove', e => this.emit('markerMouseMove', e, index))
+    this.listeners.push(marker.addListener('click', e => this.handleMarkerClick(e, index)))
+
+    this.emit('coordinateAdded', latLng)
+  }
+
+  handleMarkerClick (e, index) {
+    if (index === 0 && this.canClose()) {
+      this.emit('close')
+    }
+  }
+
+  remove () {
+    this.listeners.forEach(l => maps.event.removeListener(l))
+    this.mapPolygon.setMap(null)
+    this.mapMarkers.forEach(marker => {
+      maps.event.clearInstanceListeners(marker)
+      marker.setMap(null)
+    })
   }
 
   createIcon () {
@@ -69,12 +106,6 @@ export default class Polygon extends EventEmitter {
     return path.getLength() > 3
   }
 
-  close () {
-    const path = this.mapPolygon.getPaths().getAt(0)
-    path.removeAt(path.getLength() - 1)
-    this.mapPolygon.cursor = 'pointer'
-  }
-
   canUndo () {
     const path = this.mapPolygon.getPaths().getAt(0)
     return path.getLength() > 1
@@ -88,10 +119,11 @@ export default class Polygon extends EventEmitter {
     const lastMarker = this.mapMarkers[path.length - 1]
     maps.event.clearInstanceListeners(lastMarker)
     lastMarker.setMap(null)
+    this.mapMarkers.pop()
   }
 
-  setColorScheme (colorScheme) {
-    this.colorScheme = colorScheme
+  setMapType (mapType) {
+    const colorScheme = colorSchemes[mapType]
     this.mapPolygon.setOptions(colorScheme)
     this.mapMarkers.forEach(marker => {
       marker.setIcon(this.createIcon())

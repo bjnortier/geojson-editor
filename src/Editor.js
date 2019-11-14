@@ -34,27 +34,6 @@ const MapDiv = styled.div`
   }
 `
 
-const colorSchemes = {
-  satellite: {
-    strokeColor: '#fff',
-    fillColor: '#6c6'
-  },
-  terrain: {
-    strokeColor: '#000',
-    fillColor: '#6a6'
-  },
-  selected: {
-    satellite: {
-      strokeColor: '#fff',
-      fillColor: 'yellow'
-    },
-    terrain: {
-      strokeColor: '#000',
-      fillColor: 'yellow'
-    }
-  }
-}
-
 class Editor extends Component {
   constructor (props) {
     super(props)
@@ -67,10 +46,9 @@ class Editor extends Component {
     }
     this.mapRef = React.createRef()
     this.handleKeyUp = this.handleKeyUp.bind(this)
-    this.handleMouseMove = this.handleMouseMove.bind(this)
     this.handleClick = this.handleClick.bind(this)
-    this.handleMarkerClick = this.handleMarkerClick.bind(this)
     this.handleClose = this.handleClose.bind(this)
+    this.handleCoordinateAdded = this.handleCoordinateAdded.bind(this)
     this.handleUndo = this.handleUndo.bind(this)
     this.handleCancel = this.handleCancel.bind(this)
     this.handleChangeMapType = this.handleChangeMapType.bind(this)
@@ -79,41 +57,29 @@ class Editor extends Component {
   }
 
   componentDidMount () {
+    document.addEventListener('keyup', this.handleKeyUp)
     const map = new maps.Map(this.mapRef.current, {
       zoom: 3,
       center: new maps.LatLng(0, 0),
       mapTypeId: this.state.mapType,
       disableDefaultUI: true
     })
-
-    map.addListener('mousemove', this.handleMouseMove)
     map.addListener('click', this.handleClick)
     this.map = map
   }
 
   componentWillUnmount () {
+    document.addEventListener('keyup', this.handleKeyUp)
     maps.event.clearInstanceListeners(this.map)
   }
 
-  handleMouseMove (e) {
-    const { mode, editingPolygon } = this.state
-    if (mode === 'drawing-polygon') {
-      editingPolygon.updateLast(e.latLng)
-    }
-  }
-
   handleClick (e) {
-    const { mode, editingPolygon, polygons, selected: selected0, mapType } = this.state
-    if (mode === 'drawing-polygon' && editingPolygon) {
-      editingPolygon.addCoordinate(e.latLng)
-      // Trigger a state change so the "Finish" button will be
-      // rendered
-      this.setState({ editingPolygon })
-    } else if (mode === 'navigating') {
+    const { mode, polygons, selected: selected0, mapType } = this.state
+    if (mode === 'navigating') {
       if (selected0.length) {
         polygons.forEach((polygon, i) => {
           if (selected0.indexOf(i) !== -1) {
-            polygon.setColorScheme(colorSchemes[mapType])
+            polygon.setMapType(mapType)
           }
         })
         this.setState({
@@ -125,11 +91,7 @@ class Editor extends Component {
 
   handleCancel () {
     const { editingPolygon } = this.state
-    editingPolygon.off('polygonMouseMove', this.handleMouseMove)
-    editingPolygon.off('polygonClick', this.handleClick)
-    editingPolygon.off('markerClick', this.handleMarkerClick)
     editingPolygon.remove()
-
     this.setState({
       mode: 'navigating',
       editingPolygon: null
@@ -144,44 +106,40 @@ class Editor extends Component {
     }
   }
 
-  handleMarkerClick (e, index) {
-    const { editingPolygon } = this.state
-    if (index === 0 && editingPolygon.canClose()) {
-      this.handleClose()
-    }
-  }
-
   handleChangeMapType (e, mapType) {
-    const { editingPolygon, polygons, selected } = this.state
+    const { editingPolygon } = this.state
     if (editingPolygon) {
-      editingPolygon.setColorScheme(colorSchemes[mapType])
+      editingPolygon.setMapType(mapType)
     }
-    polygons.forEach((polygon, i) => {
-      if (selected.indexOf(i) === -1) {
-        polygon.setColorScheme(colorSchemes[mapType])
-      } else {
-        polygon.setColorScheme(colorSchemes.selected[mapType])
-      }
-    })
+    // polygons.forEach((polygon, i) => {
+    //   if (selected.indexOf(i) === -1) {
+    //     polygon.setColorScheme(colorSchemes[mapType])
+    //   } else {
+    //     polygon.setColorScheme(colorSchemes.selected[mapType])
+    //   }
+    // })
     this.map.setMapTypeId(mapType)
     this.setState({ mapType })
   }
 
   handleUndo () {
-    const { editingPolygon } = this.state
-    editingPolygon.undo()
+    this.state.editingPolygon.undo()
+    this.setState({ editingPolygon: this.state.editingPolygon })
+  }
+
+  handleCoordinateAdded () {
+    this.setState({ editingPolygon: this.state.editingPolygon })
   }
 
   handleClose () {
     const { editingPolygon, polygons: polygons0 } = this.state
-    editingPolygon.off('polygonMouseMove', this.handleMouseMove)
-    editingPolygon.off('polygonClick', this.handleClick)
-    editingPolygon.off('markerClick', this.handleMarkerClick)
-    editingPolygon.close()
+    const path = editingPolygon.mapPolygon.getPaths().getAt(0)
+    path.removeAt(path.getLength() - 1)
+    editingPolygon.off('coordinateAdded', this.handleCoordinateAdded)
+    editingPolygon.off('close', this.handleClose)
+    editingPolygon.remove()
 
-    editingPolygon.on('polygonClick', this.handlePolygonClick)
     const polygons1 = polygons0.slice()
-    polygons1.push(editingPolygon)
     this.setState({
       mode: 'navigating',
       editingPolygon: null,
@@ -204,9 +162,9 @@ class Editor extends Component {
         const selected1 = event.shiftKey ? union(selected0, [index]) : [index]
         polygons.forEach((polygon, i) => {
           if (selected1.indexOf(i) !== -1) {
-            polygon.setColorScheme(colorSchemes.selected[mapType])
+            // polygon.setMapType(colorSchemes.selected[mapType])
           } else {
-            polygon.setColorScheme(colorSchemes[mapType])
+            polygon.setMapType(mapType)
           }
         })
         this.setState({
@@ -235,7 +193,7 @@ class Editor extends Component {
   render () {
     const { mapType, mode, editingPolygon, selected } = this.state
     return (
-      <Main onKeyUp={this.handleKeyUp}>
+      <Main>
         <MapDiv ref={this.mapRef} drawing={mode === 'drawing-polygon'} />
         <Toolbar>
           <Controls>
@@ -244,10 +202,9 @@ class Editor extends Component {
             />
             <CreatPolygonTool
               onClick={() => {
-                const editingPolygon = new EditingPolygon(this.map, [new maps.LatLng({ lat: 0, lng: 0 })], colorSchemes[mapType])
-                editingPolygon.on('polygonMouseMove', this.handleMouseMove)
-                editingPolygon.on('polygonClick', this.handleClick)
-                editingPolygon.on('markerClick', this.handleMarkerClick)
+                const editingPolygon = new EditingPolygon(this.map, mapType)
+                editingPolygon.on('coordinateAdded', this.handleCoordinateAdded)
+                editingPolygon.on('close', this.handleClose)
                 this.setState({
                   mode: 'drawing-polygon',
                   editingPolygon
