@@ -1,6 +1,7 @@
 import React from 'react'
 import { render } from 'react-dom'
 import styled from 'styled-components'
+import { Reset, Button } from 'minimui'
 
 import Editor from '../../src/'
 
@@ -16,6 +17,10 @@ const mapsKey = GOOGLE_MAPS_API_KEY // eslint-disable-line
 
 render(
   <Main>
-    <Editor googleMapsAPIKey={mapsKey} />
+    <Reset />
+    <Editor
+      googleMapsAPIKey={mapsKey}
+      toolbarExtension={<Button secondary label='Foo' onClick={() => {}} />}
+    />
   </Main>,
   document.getElementById('root'))

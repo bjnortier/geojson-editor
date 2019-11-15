@@ -123,7 +123,7 @@ export const MapType = ({ onChangeMapType, mapType }) => {
         onChangeMapType(mapType === 'terrain' ? 'satellite' : 'terrain')
       }}
     >
-      <img src={mapType === 'terrain' ? terrain : satellite} />
+      <img src={mapType === 'terrain' ? satellite : terrain} />
     </MapTypeButton>
   )
 }
@@ -140,7 +140,7 @@ export const Toolbar = styled.div`
   right: 0;
   padding: 8px;
   background-color: white;
-  height: 40px;
+  height: 36px;
   > div > div {
     padding-bottom: 0;
   }
@@ -150,4 +150,9 @@ export const Toolbar = styled.div`
   > div:first-child {
     margin-left: 0;
   }
+  display: flex;
+`
+
+export const Spacer = styled.div`
+  flex-grow: 1;
 `

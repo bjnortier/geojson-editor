@@ -1,8 +1,12 @@
 import React, { Component } from 'react'
 import styled from 'styled-components'
+import PropTypes from 'prop-types'
 import { union } from 'lodash'
 
-import { Toolbar, MapType, CreatPolygonTool, DeleteTool, AbortTool, UndoTool, FinishTool } from './tools'
+import {
+  Toolbar, MapType, CreatPolygonTool, DeleteTool,
+  AbortTool, UndoTool, FinishTool, Spacer
+} from './tools'
 import EditingPolygon from './EditingPolygon'
 import FinishedPolygon from './FinishedPolygon'
 
@@ -28,7 +32,7 @@ const ToolButtons = styled.div`
 
 const MapDiv = styled.div`
   position: absolute;
-  top: 56px;
+  top: 52px;
   bottom: 0;
   left: 0;
   right: 0;
@@ -217,6 +221,7 @@ class Editor extends Component {
   }
 
   render () {
+    const { toolbarExtension } = this.props
     const { mapType, mode, editingPolygon, selected } = this.state
     return (
       <Main>
@@ -244,6 +249,8 @@ class Editor extends Component {
               disabled={!editingPolygon || !editingPolygon.canUndo()}
             />
           </ToolButtons>
+          <Spacer />
+          {toolbarExtension}
         </Toolbar>
         <MapType mapType={mapType} onChangeMapType={this.handleChangeMapType} />
       </Main>
@@ -252,6 +259,7 @@ class Editor extends Component {
 }
 
 Editor.propTypes = {
+  toolbarExtension: PropTypes.oneOfType([PropTypes.array, PropTypes.object])
 }
 
 export default Editor
