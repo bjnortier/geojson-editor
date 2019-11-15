@@ -2,39 +2,20 @@ import React from 'react'
 import PropTypes from 'prop-types'
 import styled from 'styled-components'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
-import { faDrawPolygon, faTrashAlt } from '@fortawesome/free-solid-svg-icons'
+import { faDrawPolygon, faTrash, faTimes, faUndoAlt, faCheck } from '@fortawesome/free-solid-svg-icons'
 
-import satellite from './satellite'
-import terrain from './terrain'
-
-export const Toolbar = styled.div`
-  position: absolute;
-  top: 8px;
-  left: 8px;
-  padding: 8px;
-  background-color: white;
-  border-radius: 4px;
-  height: 40px;
-  > div > div {
-    padding-bottom: 0;
-  }
-  > div {
-    margin-left: 4px;
-  }
-  > div:first-child {
-    margin-left: 0;
-  }
-`
+import satellite from './images/satellite'
+import terrain from './images/terrain'
 
 const ToolButton = styled.div`
   display: inline-block;
   font-size: 20px;
   padding: 3px;
   cursor: ${({ disabled }) => disabled ? 'inherit' : 'pointer'};
-  color: ${({ disabled }) => disabled ? 'grey' : 'black'};
+  color: ${({ disabled, color }) => disabled ? 'grey' : color || 'black'};
 `
 
-const Tool = ({ onClick, disabled, children }) => (
+const Tool = ({ onClick, disabled, icon, color }) => (
   <ToolButton
     onClick={() => {
       if (!disabled) {
@@ -42,21 +23,21 @@ const Tool = ({ onClick, disabled, children }) => (
       }
     }}
     disabled={disabled}
+    color={color}
   >
-    {children}
+    <FontAwesomeIcon icon={icon} />
   </ToolButton>
 )
 
 Tool.propTypes = {
   onClick: PropTypes.func.isRequired,
   disabled: PropTypes.bool.isRequired,
-  children: PropTypes.oneOfType([PropTypes.array, PropTypes.object]).isRequired
+  icon: PropTypes.object.isRequired,
+  color: PropTypes.string
 }
 
 export const CreatPolygonTool = ({ onClick, disabled }) => (
-  <Tool onClick={onClick} disabled={disabled}>
-    <FontAwesomeIcon icon={faDrawPolygon} />
-  </Tool>
+  <Tool onClick={onClick} disabled={disabled} icon={faDrawPolygon} />
 )
 
 CreatPolygonTool.propTypes = {
@@ -69,9 +50,7 @@ CreatPolygonTool.defaultProps = {
 }
 
 export const DeleteTool = ({ onClick, disabled }) => (
-  <Tool onClick={onClick} disabled={disabled}>
-    <FontAwesomeIcon icon={faTrashAlt} />
-  </Tool>
+  <Tool onClick={onClick} disabled={disabled} icon={faTrash} color='#da1616' />
 )
 
 DeleteTool.propTypes = {
@@ -83,11 +62,50 @@ DeleteTool.defaultProps = {
   disabled: true
 }
 
+export const AbortTool = ({ onClick, disabled }) => (
+  <Tool onClick={onClick} disabled={disabled} icon={faTimes} color='#da1616' />
+)
+
+AbortTool.propTypes = {
+  onClick: PropTypes.func.isRequired,
+  disabled: PropTypes.bool.isRequired
+}
+
+AbortTool.defaultProps = {
+  disabled: true
+}
+
+export const FinishTool = ({ onClick, disabled }) => (
+  <Tool onClick={onClick} disabled={disabled} icon={faCheck} color='#187b18' />
+)
+
+FinishTool.propTypes = {
+  onClick: PropTypes.func.isRequired,
+  disabled: PropTypes.bool.isRequired
+}
+
+FinishTool.defaultProps = {
+  disabled: true
+}
+
+export const UndoTool = ({ onClick, disabled }) => (
+  <Tool onClick={onClick} disabled={disabled} icon={faUndoAlt} />
+)
+
+UndoTool.propTypes = {
+  onClick: PropTypes.func.isRequired,
+  disabled: PropTypes.bool.isRequired
+}
+
+UndoTool.defaultProps = {
+  disabled: true
+}
+
 const MapTypeButton = styled.div`
   width: 80px;
   height: 80px;
   position: absolute;
-  top: 72px;
+  top: 64px;
   left: 8px;
   padding: 2px;
   background-color: white;
@@ -114,3 +132,22 @@ MapType.propTypes = {
   onChangeMapType: PropTypes.func.isRequired,
   mapType: PropTypes.string.isRequired
 }
+
+export const Toolbar = styled.div`
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  padding: 8px;
+  background-color: white;
+  height: 40px;
+  > div > div {
+    padding-bottom: 0;
+  }
+  > div {
+    margin-left: 4px;
+  }
+  > div:first-child {
+    margin-left: 0;
+  }
+`

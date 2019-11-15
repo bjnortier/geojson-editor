@@ -1,9 +1,8 @@
 import React, { Component } from 'react'
 import styled from 'styled-components'
-import { Button, HSpace } from 'minimui'
 import { union } from 'lodash'
 
-import { Toolbar, MapType, CreatPolygonTool, DeleteTool } from './tools'
+import { Toolbar, MapType, CreatPolygonTool, DeleteTool, AbortTool, UndoTool, FinishTool } from './tools'
 import EditingPolygon from './EditingPolygon'
 import FinishedPolygon from './FinishedPolygon'
 
@@ -16,7 +15,7 @@ const Main = styled.div`
   position: relative;
 `
 
-const Controls = styled.div`
+const ToolButtons = styled.div`
   display: inline-block;
   padding: 4px;
   > div {
@@ -28,9 +27,11 @@ const Controls = styled.div`
 `
 
 const MapDiv = styled.div`
-  width: 100%;
-  height: 100%;
-  box-sizing: border-box;
+  position: absolute;
+  top: 56px;
+  bottom: 0;
+  left: 0;
+  right: 0;
   .gm-style:first-of-type > div:nth-child(1) {
     cursor: ${({ drawing }) => drawing ? 'crosshair !important' : 'inherit'};
   }
@@ -221,30 +222,28 @@ class Editor extends Component {
       <Main>
         <MapDiv ref={this.mapRef} drawing={mode === 'editing-polygon'} />
         <Toolbar>
-          <Controls>
-            <CreatPolygonTool
-              onClick={this.handleCreatePolygon}
-              disabled={mode !== 'navigating'}
-            />
+          <ToolButtons>
             <DeleteTool
               onClick={this.handleDelete}
               disabled={selected.length === 0}
             />
-          </Controls>
-          {mode === 'editing-polygon'
-            ? (
-              <>
-                <HSpace />
-                {editingPolygon && editingPolygon.canUndo()
-                  ? <Button secondary label='Undo' onClick={this.handleUndo} />
-                  : null}
-                <Button secondary label='Cancel' onClick={this.handleCancel} />
-                {editingPolygon && editingPolygon.canClose()
-                  ? <Button secondary label='Finish' onClick={this.handleClose} />
-                  : null}
-              </>
-            )
-            : null}
+            <CreatPolygonTool
+              onClick={this.handleCreatePolygon}
+              disabled={mode !== 'navigating'}
+            />
+            <UndoTool
+              onClick={this.handleUndo}
+              disabled={!editingPolygon || !editingPolygon.canUndo()}
+            />
+            <AbortTool
+              onClick={this.handleCancel}
+              disabled={!editingPolygon}
+            />
+            <FinishTool
+              onClick={this.handleClose}
+              disabled={!editingPolygon || !editingPolygon.canUndo()}
+            />
+          </ToolButtons>
         </Toolbar>
         <MapType mapType={mapType} onChangeMapType={this.handleChangeMapType} />
       </Main>
