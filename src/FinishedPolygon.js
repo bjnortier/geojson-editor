@@ -9,10 +9,10 @@ export default class FinishedPolygon extends Polygon {
     }
 
     this.handleClick = this.handleClick.bind(this)
-    this.listeners.push(this.mapPolygon.addListener('click', this.handleClick))
+    this._listeners.push(this._mapPolygon.addListener('click', this.handleClick))
   }
 
   handleClick (e) {
-    this.emit('click', e)
+    this.emit('click', e, this.id)
   }
 }

@@ -2,13 +2,15 @@ import EventEmitter from 'events'
 const { maps } = window.google
 
 const colorSchemes = {
-  satellite: {
-    strokeColor: '#fff',
-    fillColor: '#6c6'
-  },
-  terrain: {
-    strokeColor: '#000',
-    fillColor: '#6a6'
+  unselected: {
+    satellite: {
+      strokeColor: '#fff',
+      fillColor: '#6c6'
+    },
+    terrain: {
+      strokeColor: '#000',
+      fillColor: '#6a6'
+    }
   },
   selected: {
     satellite: {
@@ -24,47 +26,75 @@ const colorSchemes = {
 
 export default class Polygon extends EventEmitter {
   constructor (map, path, mapType, cursor) {
-    super(map, mapType)
-    this.map = map
-    this.colorScheme = colorSchemes[mapType]
+    super()
+    this._id = Polygon.nextId++
+    this._map = map
+    this._mapType = mapType
+    this._colorScheme = colorSchemes.unselected[mapType]
     const mapPolygon = new maps.Polygon({
       paths: [path],
       strokeOpacity: 0.5,
       strokeWeight: 1,
       fillOpacity: 0.1,
       cursor,
-      ...this.colorScheme
+      ...this._colorScheme
     })
-    mapPolygon.setMap(this.map)
-    this.mapPolygon = mapPolygon
-    this.mapMarkers = []
-    this.listeners = []
+    mapPolygon.setMap(map)
+    this._mapPolygon = mapPolygon
+    this._mapMarkers = []
+    this._listeners = []
+    this._selected = false
+  }
+
+  get id () {
+    return this._id
   }
 
   addMarker (latLng, cursor) {
     const marker = new maps.Marker({
       position: latLng,
       sName: 'coordinate-0',
-      map: this.map,
+      map: this._map,
       icon: this.createIcon()
     })
-    this.mapMarkers.push(marker)
+    this._mapMarkers.push(marker)
     return marker
   }
 
   remove () {
-    this.listeners.forEach(l => maps.event.removeListener(l))
-    this.mapPolygon.setMap(null)
-    this.mapMarkers.forEach(marker => {
+    this._listeners.forEach(l => maps.event.removeListener(l))
+    this._mapPolygon.setMap(null)
+    this._mapMarkers.forEach(marker => {
       maps.event.clearInstanceListeners(marker)
       marker.setMap(null)
     })
+    this.removeAllListeners()
   }
 
-  setMapType (mapType) {
-    this.colorScheme = colorSchemes[mapType]
-    this.mapPolygon.setOptions(this.colorScheme)
-    this.mapMarkers.forEach(marker => {
+  set mapType (mapType) {
+    this._mapType = mapType
+    this.updateAppearance()
+  }
+
+  set selected (selected) {
+    this._selected = selected
+    this.updateAppearance()
+  }
+
+  get selected () {
+    return this._selected
+  }
+
+  set generateMouseEvents (generate) {
+    this._mapPolygon.setOptions({ clickable: generate })
+  }
+
+  updateAppearance () {
+    this._colorScheme = this._selected
+      ? colorSchemes.selected[this._mapType]
+      : colorSchemes.unselected[this._mapType]
+    this._mapPolygon.setOptions(this._colorScheme)
+    this._mapMarkers.forEach(marker => {
       marker.setIcon(this.createIcon())
     })
   }
@@ -75,7 +105,9 @@ export default class Polygon extends EventEmitter {
       scale: 3,
       fillOpacity: 1,
       strokeWeight: 1,
-      ...this.colorScheme
+      ...this._colorScheme
     }
   }
 }
+
+Polygon.nextId = 0
