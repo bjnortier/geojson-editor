@@ -66,6 +66,7 @@ class Editor extends Component {
   }
 
   componentDidMount () {
+    const { geoJSON } = this.props
     document.addEventListener('keyup', this.handleKeyUp)
     const map = new maps.Map(this.mapRef.current, {
       zoom: 3,
@@ -75,19 +76,15 @@ class Editor extends Component {
     })
     map.addListener('click', this.handleMapClick)
     this.map = map
-    this.addFinishedPolygons([
-      [
-        new LatLng({ lat: 0, lng: 0 }),
-        new LatLng({ lat: 10, lng: 0 }),
-        new LatLng({ lat: 10, lng: 10 }),
-        new LatLng({ lat: 0, lng: 10 })
-      ], [
-        new LatLng({ lat: 0, lng: 20 }),
-        new LatLng({ lat: 10, lng: 20 }),
-        new LatLng({ lat: 10, lng: 30 }),
-        new LatLng({ lat: 0, lng: 30 })
-      ]
-    ])
+    const paths = []
+    if (geoJSON) {
+      geoJSON.features.forEach(f => {
+        const path = f.geometry.coordinates[0].map(([lng, lat]) => new LatLng(lat, lng))
+        paths.push(path)
+      })
+      const finishedPolygons = this.createFinishedPolygons(paths)
+      this.setState({ finishedPolygons })
+    }
   }
 
   componentWillUnmount () {
@@ -95,7 +92,7 @@ class Editor extends Component {
     maps.event.clearInstanceListeners(this.map)
   }
 
-  addFinishedPolygons (paths) {
+  createFinishedPolygons (paths) {
     const { mapType, finishedPolygons: finishedPolygons0 } = this.state
     const finishedPolygons1 = finishedPolygons0.slice()
     paths.forEach(path => {
@@ -103,7 +100,7 @@ class Editor extends Component {
       polygon.on('click', this.handlePolygonClick)
       finishedPolygons1.push(polygon)
     })
-    this.setState({ finishedPolygons: finishedPolygons1 })
+    return finishedPolygons1
   }
 
   handleCancel () {
@@ -119,17 +116,21 @@ class Editor extends Component {
   }
 
   handleClose () {
-    const { editingPolygon, finishedPolygons } = this.state
+    const { editingPolygon, finishedPolygons: finishedPolygons0 } = this.state
     const path = editingPolygon.close().getArray()
     editingPolygon.remove()
-    finishedPolygons.forEach(p => {
+    finishedPolygons0.forEach(p => {
       p.generateMouseEvents = true
     })
     this.setState({
       mode: 'navigating',
       editingPolygon: null
     })
-    this.addFinishedPolygons([path])
+    let finishedPolygons1 = finishedPolygons0.slice()
+    finishedPolygons1 = finishedPolygons1.concat(this.createFinishedPolygons([path]))
+    this.setState({
+      finishedPolygons: finishedPolygons1
+    }, this.emitGeoJSON)
   }
 
   // Undo & trigger a state update on coordinate added
@@ -203,7 +204,7 @@ class Editor extends Component {
     this.setState({
       finishedPolygons: finishedPolygons1,
       selected: []
-    })
+    }, this.emitGeoJSON)
   }
 
   handleMapClick (e) {
@@ -220,9 +221,28 @@ class Editor extends Component {
     }
   }
 
+  emitGeoJSON () {
+    const { onGeoJSONChanged } = this.props
+    const { finishedPolygons } = this.state
+    const features = finishedPolygons.map(p => ({
+      type: 'Feature',
+      properties: {},
+      geometry: {
+        type: 'Polygon',
+        coordinates: [p.path.getArray().map(x => [x.lng(), x.lat()])]
+      }
+    }))
+    const geoJSON = {
+      type: 'FeatureCollection',
+      features
+    }
+    onGeoJSONChanged(geoJSON)
+  }
+
   render () {
     const { toolbarExtension } = this.props
     const { mapType, mode, editingPolygon, selected } = this.state
+
     return (
       <Main>
         <MapDiv ref={this.mapRef} drawing={mode === 'editing-polygon'} />
@@ -259,7 +279,9 @@ class Editor extends Component {
 }
 
 Editor.propTypes = {
-  toolbarExtension: PropTypes.oneOfType([PropTypes.array, PropTypes.object])
+  toolbarExtension: PropTypes.oneOfType([PropTypes.array, PropTypes.object]),
+  onGeoJSONChanged: PropTypes.func.isRequired,
+  geoJSON: PropTypes.object
 }
 
 export default Editor

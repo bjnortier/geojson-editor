@@ -89,6 +89,10 @@ export default class Polygon extends EventEmitter {
     this._mapPolygon.setOptions({ clickable: generate })
   }
 
+  get path () {
+    return this._mapPolygon.getPaths().getAt(0)
+  }
+
   updateAppearance () {
     this._colorScheme = this._selected
       ? colorSchemes.selected[this._mapType]

@@ -27,8 +27,10 @@ export default class EditingPolygon extends Polygon {
     path.push(latLng)
 
     const index = this._mapMarkers.length
-    const marker = this.addMarker(latLng, index === 0 ? 'pointer' : 'crosshair')
-    this._listeners.push(marker.addListener('click', e => this.handleMarkerClick(e, index)))
+    if (index === 0) {
+      const marker = this.addMarker(latLng, 'pointer')
+      this._listeners.push(marker.addListener('click', e => this.handleMarkerClick(e, index)))
+    }
     this.emit('coordinateAdded', latLng)
   }
 
