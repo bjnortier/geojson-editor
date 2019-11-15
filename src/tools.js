@@ -3,7 +3,9 @@ import PropTypes from 'prop-types'
 import styled from 'styled-components'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { faDrawPolygon, faTrashAlt } from '@fortawesome/free-solid-svg-icons'
-import { Select } from 'minimui'
+
+import satellite from './satellite'
+import terrain from './terrain'
 
 export const Toolbar = styled.div`
   position: absolute;
@@ -51,18 +53,6 @@ Tool.propTypes = {
   children: PropTypes.oneOfType([PropTypes.array, PropTypes.object]).isRequired
 }
 
-export const MapType = ({ mapType, onChangeMapType }) => (
-  <Select value={mapType} onChange={onChangeMapType}>
-    <option value='satellite'>Satellite</option>
-    <option value='terrain'>Terrain</option>
-  </Select>
-)
-
-MapType.propTypes = {
-  mapType: PropTypes.string.isRequired,
-  onChangeMapType: PropTypes.func.isRequired
-}
-
 export const CreatPolygonTool = ({ onClick, disabled }) => (
   <Tool onClick={onClick} disabled={disabled}>
     <FontAwesomeIcon icon={faDrawPolygon} />
@@ -91,4 +81,36 @@ DeleteTool.propTypes = {
 
 DeleteTool.defaultProps = {
   disabled: true
+}
+
+const MapTypeButton = styled.div`
+  width: 80px;
+  height: 80px;
+  position: absolute;
+  top: 72px;
+  left: 8px;
+  padding: 2px;
+  background-color: white;
+  > img {
+    width: 80px;
+    height: 80px;
+  }
+  cursor: pointer;
+`
+
+export const MapType = ({ onChangeMapType, mapType }) => {
+  return (
+    <MapTypeButton
+      onClick={() => {
+        onChangeMapType(mapType === 'terrain' ? 'satellite' : 'terrain')
+      }}
+    >
+      <img src={mapType === 'terrain' ? terrain : satellite} />
+    </MapTypeButton>
+  )
+}
+
+MapType.propTypes = {
+  onChangeMapType: PropTypes.func.isRequired,
+  mapType: PropTypes.string.isRequired
 }

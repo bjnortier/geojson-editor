@@ -146,7 +146,7 @@ class Editor extends Component {
     }
   }
 
-  handleChangeMapType (e, mapType) {
+  handleChangeMapType (mapType) {
     const { editingPolygon, finishedPolygons } = this.state
     if (editingPolygon) {
       editingPolygon.mapType = mapType
@@ -222,9 +222,6 @@ class Editor extends Component {
         <MapDiv ref={this.mapRef} drawing={mode === 'editing-polygon'} />
         <Toolbar>
           <Controls>
-            <MapType
-              mapType={mapType} onChangeMapType={this.handleChangeMapType}
-            />
             <CreatPolygonTool
               onClick={this.handleCreatePolygon}
               disabled={mode !== 'navigating'}
@@ -249,7 +246,7 @@ class Editor extends Component {
             )
             : null}
         </Toolbar>
-
+        <MapType mapType={mapType} onChangeMapType={this.handleChangeMapType} />
       </Main>
     )
   }
