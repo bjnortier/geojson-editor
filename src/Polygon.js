@@ -3,23 +3,25 @@ const { maps } = window.google
 
 const colorSchemes = {
   unselected: {
-    satellite: {
-      strokeColor: '#fff',
-      fillColor: '#6c6'
+    hybrid: {
+      strokeColor: '#58c0ff',
+      fillColor: '#58c0ff',
+      markerFillColor: 'white'
     },
     terrain: {
-      strokeColor: '#000',
-      fillColor: '#6a6'
+      strokeColor: '#2468bf',
+      fillColor: '#2468bf',
+      markerFillColor: 'black'
     }
   },
   selected: {
-    satellite: {
-      strokeColor: '#fff',
-      fillColor: 'yellow'
+    hybrid: {
+      strokeColor: '#ffb62c',
+      fillColor: '#ffb62c'
     },
     terrain: {
-      strokeColor: '#000',
-      fillColor: 'yellow'
+      strokeColor: '#ffa805',
+      fillColor: '#ffa805'
     }
   }
 }
@@ -33,7 +35,7 @@ export default class Polygon extends EventEmitter {
     this._colorScheme = colorSchemes.unselected[mapType]
     const mapPolygon = new maps.Polygon({
       paths: [path],
-      strokeOpacity: 0.5,
+      strokeOpacity: 1.0,
       strokeWeight: 1,
       fillOpacity: 0.1,
       cursor,
@@ -109,7 +111,8 @@ export default class Polygon extends EventEmitter {
       scale: 3,
       fillOpacity: 1,
       strokeWeight: 1,
-      ...this._colorScheme
+      ...this._colorScheme,
+      fillColor: this._colorScheme.markerFillColor
     }
   }
 }

@@ -2,6 +2,8 @@ import React, { Component } from 'react'
 import styled from 'styled-components'
 import PropTypes from 'prop-types'
 import { union } from 'lodash'
+import geojsonExtent from '@mapbox/geojson-extent'
+import { Button, HSpace } from 'minimui'
 
 import {
   Toolbar, MapType, CreatPolygonTool, DeleteTool,
@@ -41,15 +43,39 @@ const MapDiv = styled.div`
   }
 `
 
+const Error = styled.div`
+  position: absolute;
+  top: 64px;
+  left: 0;
+  right: 0;
+  display: flex;
+  > div {
+    display: inline-block;
+  }
+  > div:first-child, > div:last-child {
+    flex-grow: 1;
+  }
+  > div:nth-child(2) {
+    background-color: white;
+    color: red;
+    padding: 8px;
+    border-radius: 4px;
+    > div {
+      padding-bottom: 0;
+    }
+  }
+`
+
 class Editor extends Component {
   constructor (props) {
     super(props)
     this.state = {
-      mapType: 'satellite',
+      mapType: 'hybrid',
       mode: 'navigating',
       finishedPolygons: [],
       editingPolygon: null,
-      selected: []
+      selected: [],
+      error: null
     }
     this.mapRef = React.createRef()
     this.handleKeyUp = this.handleKeyUp.bind(this)
@@ -66,7 +92,6 @@ class Editor extends Component {
   }
 
   componentDidMount () {
-    const { geoJSON } = this.props
     document.addEventListener('keyup', this.handleKeyUp)
     const map = new maps.Map(this.mapRef.current, {
       zoom: 3,
@@ -76,14 +101,36 @@ class Editor extends Component {
     })
     map.addListener('click', this.handleMapClick)
     this.map = map
-    const paths = []
+
+    const { geoJSON } = this.props
     if (geoJSON) {
-      geoJSON.features.forEach(f => {
-        const path = f.geometry.coordinates[0].map(([lng, lat]) => new LatLng(lat, lng))
-        paths.push(path)
-      })
-      const finishedPolygons = this.createFinishedPolygons(paths)
-      this.setState({ finishedPolygons })
+      try {
+        const paths = []
+        if (geoJSON.features && geoJSON.features.length) {
+          geoJSON.features.forEach(f => {
+            if (f.geometry.type === 'Polygon') {
+              const path = f.geometry.coordinates[0].map(([lng, lat]) => new LatLng(lat, lng))
+              paths.push(path)
+            }
+          })
+          const finishedPolygons = this.createFinishedPolygons(paths)
+          this.setState({ finishedPolygons })
+          const extents = geojsonExtent(this.props.geoJSON)
+          const bounds = new maps.LatLngBounds(
+            { lng: extents[0], lat: extents[1] },
+            { lng: extents[2], lat: extents[3] }
+          )
+          map.fitBounds(bounds, {
+            top: 21,
+            bottom: 21,
+            left: 21,
+            right: 21
+          })
+        }
+      } catch (e) {
+        console.error(e.message)
+        this.setState({ error: 'Could not parse GeoJSON :/' })
+      }
     }
   }
 
@@ -241,8 +288,7 @@ class Editor extends Component {
 
   render () {
     const { toolbarExtension } = this.props
-    const { mapType, mode, editingPolygon, selected } = this.state
-
+    const { mapType, mode, editingPolygon, selected, error } = this.state
     return (
       <Main>
         <MapDiv ref={this.mapRef} drawing={mode === 'editing-polygon'} />
@@ -256,23 +302,42 @@ class Editor extends Component {
               onClick={this.handleCreatePolygon}
               disabled={mode !== 'navigating'}
             />
-            <UndoTool
-              onClick={this.handleUndo}
-              disabled={!editingPolygon || !editingPolygon.canUndo()}
-            />
-            <AbortTool
-              onClick={this.handleCancel}
-              disabled={!editingPolygon}
-            />
-            <FinishTool
-              onClick={this.handleClose}
-              disabled={!editingPolygon || !editingPolygon.canUndo()}
-            />
+            {mode === 'editing-polygon'
+              ? (
+                <>
+                  <UndoTool
+                    onClick={this.handleUndo}
+                    disabled={!editingPolygon || !editingPolygon.canUndo()}
+                  />
+                  <AbortTool
+                    onClick={this.handleCancel}
+                    disabled={!editingPolygon}
+                  />
+                  <FinishTool
+                    onClick={this.handleClose}
+                    disabled={!editingPolygon || !editingPolygon.canUndo()}
+                  />
+                </>
+              )
+              : null}
           </ToolButtons>
           <Spacer />
           {toolbarExtension}
         </Toolbar>
         <MapType mapType={mapType} onChangeMapType={this.handleChangeMapType} />
+        {error
+          ? (
+            <Error>
+              <div />
+              <div>
+                {error}
+                <HSpace />
+                <Button secondary label='Dismiss' onClick={() => this.setState({ error: null })} />
+              </div>
+              <div />
+            </Error>
+          )
+          : null}
       </Main>
     )
   }

@@ -51,9 +51,11 @@ export default class EditingPolygon extends Polygon {
     path.removeAt(path.length - 1)
 
     const lastMarker = this._mapMarkers[path.length - 1]
-    maps.event.clearInstanceListeners(lastMarker)
-    lastMarker.setMap(null)
-    this._mapMarkers.pop()
+    if (lastMarker) {
+      maps.event.clearInstanceListeners(lastMarker)
+      lastMarker.setMap(null)
+      this._mapMarkers.pop()
+    }
   }
 
   canClose () {

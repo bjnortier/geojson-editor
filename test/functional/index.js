@@ -1,7 +1,7 @@
 import React, { Component } from 'react'
 import { render } from 'react-dom'
 import styled from 'styled-components'
-import { Reset, Button } from 'minimui'
+import { Reset, Button, HSpace } from 'minimui'
 
 import Editor from '../../src/'
 import krugerJSON from './kruger.json'
@@ -12,6 +12,13 @@ const Main = styled.div`
   right: 0;
   bottom: 0;
   left: 0;
+`
+
+const Buttons = styled.div`
+  padding: 4px;
+  > div {
+    padding-bottom: 0;
+  }
 `
 
 const mapsKey = GOOGLE_MAPS_API_KEY // eslint-disable-line
@@ -29,7 +36,7 @@ class Test extends Component {
     const { geoJSON, iteration } = this.state
     return (
       <>
-        <div>
+        <Buttons>
           <Button
             label='Clear'
             secondary
@@ -37,6 +44,7 @@ class Test extends Component {
               geoJSON: null, iteration: Test.iteration++
             })}
           />
+          <HSpace />
           <Button
             label='Kruger'
             secondary
@@ -44,14 +52,37 @@ class Test extends Component {
               geoJSON: krugerJSON, iteration: Test.iteration++
             })}
           />
-        </div>
+          <HSpace />
+          <Button
+            label='Empty'
+            secondary
+            onClick={() => this.setState({
+              geoJSON: {}, iteration: Test.iteration++
+            })}
+          />
+          <HSpace />
+          <Button
+            label='0 Features'
+            secondary
+            onClick={() => this.setState({
+              geoJSON: { features: [] }, iteration: Test.iteration++
+            })}
+          />
+          <HSpace />
+          <Button
+            label='Error'
+            secondary
+            onClick={() => this.setState({
+              geoJSON: { features: [null] }, iteration: Test.iteration++
+            })}
+          />
+        </Buttons>
         <Editor
           key={iteration}
           geoJSON={geoJSON}
           googleMapsAPIKey={mapsKey}
           toolbarExtension={<Button secondary label='Foo' onClick={() => {}} />}
           onGeoJSONChanged={geoJSON => {
-            console.log('>>', geoJSON)
             this.setState({ geoJSON })
           }}
         />

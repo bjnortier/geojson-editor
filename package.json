@@ -59,6 +59,7 @@
     "@fortawesome/free-regular-svg-icons": "^5.11.2",
     "@fortawesome/free-solid-svg-icons": "^5.11.2",
     "@fortawesome/react-fontawesome": "^0.1.7",
+    "@mapbox/geojson-extent": "^0.3.2",
     "lodash": "^4.17.15",
     "minimui": "^1.3.4",
     "react-helmet": "^5.2.1"

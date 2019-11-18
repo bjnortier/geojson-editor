@@ -2,14 +2,15 @@ import React from 'react'
 import PropTypes from 'prop-types'
 import styled from 'styled-components'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
-import { faDrawPolygon, faTrash, faTimes, faUndoAlt, faCheck } from '@fortawesome/free-solid-svg-icons'
+import { faDrawPolygon, faTimes, faUndoAlt, faCheck } from '@fortawesome/free-solid-svg-icons'
+import { faTrashAlt } from '@fortawesome/free-regular-svg-icons'
 
-import satellite from './images/satellite'
+import hybrid from './images/hybrid'
 import terrain from './images/terrain'
 
 const ToolButton = styled.div`
   display: inline-block;
-  font-size: 20px;
+  font-size: 16px;
   padding: 3px;
   cursor: ${({ disabled }) => disabled ? 'inherit' : 'pointer'};
   color: ${({ disabled, color }) => disabled ? 'grey' : color || 'black'};
@@ -50,7 +51,7 @@ CreatPolygonTool.defaultProps = {
 }
 
 export const DeleteTool = ({ onClick, disabled }) => (
-  <Tool onClick={onClick} disabled={disabled} icon={faTrash} color='#da1616' />
+  <Tool onClick={onClick} disabled={disabled} icon={faTrashAlt} color='#da1616' />
 )
 
 DeleteTool.propTypes = {
@@ -120,10 +121,10 @@ export const MapType = ({ onChangeMapType, mapType }) => {
   return (
     <MapTypeButton
       onClick={() => {
-        onChangeMapType(mapType === 'terrain' ? 'satellite' : 'terrain')
+        onChangeMapType(mapType === 'terrain' ? 'hybrid' : 'terrain')
       }}
     >
-      <img src={mapType === 'terrain' ? satellite : terrain} />
+      <img src={mapType === 'terrain' ? hybrid : terrain} />
     </MapTypeButton>
   )
 }
