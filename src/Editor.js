@@ -305,6 +305,7 @@ class Editor extends Component {
             {mode === 'editing-polygon'
               ? (
                 <>
+                  <HSpace />
                   <UndoTool
                     onClick={this.handleUndo}
                     disabled={!editingPolygon || !editingPolygon.canUndo()}

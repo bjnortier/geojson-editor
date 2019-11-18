@@ -15,9 +15,12 @@ const Main = styled.div`
 `
 
 const Buttons = styled.div`
-  padding: 4px;
+  padding: 4px 8px;
+`
+
+const Extension = styled.div`
   > div {
-    padding-bottom: 0;
+    padding: 0;
   }
 `
 
@@ -81,7 +84,7 @@ class Test extends Component {
           key={iteration}
           geoJSON={geoJSON}
           googleMapsAPIKey={mapsKey}
-          toolbarExtension={<Button secondary label='Foo' onClick={() => {}} />}
+          toolbarExtension={<Extension><Button secondary label='Foo' onClick={() => {}} /></Extension>}
           onGeoJSONChanged={geoJSON => {
             this.setState({ geoJSON })
           }}
