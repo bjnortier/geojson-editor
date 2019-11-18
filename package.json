@@ -1,6 +1,6 @@
 {
   "name": "geojson-editor",
-  "version": "0.2.0",
+  "version": "0.2.1",
   "description": "React GeoJSON editor",
   "main": "lib/index.js",
   "scripts": {
@@ -60,6 +60,7 @@
     "@fortawesome/free-solid-svg-icons": "^5.11.2",
     "@fortawesome/react-fontawesome": "^0.1.7",
     "@mapbox/geojson-extent": "^0.3.2",
+    "google-maps": "^3.3.0",
     "lodash": "^4.17.15",
     "minimui": "^2.0.0",
     "react-helmet": "^5.2.1"
