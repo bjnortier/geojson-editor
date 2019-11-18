@@ -31,11 +31,8 @@ module.exports = {
     }),
     new webpack.HotModuleReplacementPlugin(),
     new HtmlWebpackPlugin({
-      templateParameters: {
-        googleMapsAPIKey: process.env.GOOGLE_MAPS_API_KEY
-      },
-      meta: {
-      },
+      templateParameters: {},
+      meta: {},
       template: './index.ejs'
     })
   ],

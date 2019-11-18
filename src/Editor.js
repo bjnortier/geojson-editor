@@ -12,8 +12,9 @@ import {
 import EditingPolygon from './EditingPolygon'
 import FinishedPolygon from './FinishedPolygon'
 
-const { maps } = window.google
-const { LatLng } = maps
+var GoogleMapsLoader = require('google-maps')
+GoogleMapsLoader.KEY = GOOGLE_MAPS_API_KEY // eslint-disable-line
+GoogleMapsLoader.VERSION = '3.37'
 
 const Main = styled.div`
   width: 100%;
@@ -93,57 +94,62 @@ class Editor extends Component {
 
   componentDidMount () {
     document.addEventListener('keyup', this.handleKeyUp)
-    const map = new maps.Map(this.mapRef.current, {
-      zoom: 3,
-      center: new maps.LatLng(0, 0),
-      mapTypeId: this.state.mapType,
-      disableDefaultUI: true
-    })
-    map.addListener('click', this.handleMapClick)
-    this.map = map
+    GoogleMapsLoader.load(google => {
+      const { maps } = google
+      this.maps = maps
+      const { LatLng } = maps
+      const map = new maps.Map(this.mapRef.current, {
+        zoom: 3,
+        center: new maps.LatLng(0, 0),
+        mapTypeId: this.state.mapType,
+        disableDefaultUI: true
+      })
+      map.addListener('click', this.handleMapClick)
+      this.map = map
 
-    const { geoJSON } = this.props
-    if (geoJSON) {
-      try {
-        const paths = []
-        if (geoJSON.features && geoJSON.features.length) {
-          geoJSON.features.forEach(f => {
-            if (f.geometry.type === 'Polygon') {
-              const path = f.geometry.coordinates[0].map(([lng, lat]) => new LatLng(lat, lng))
-              paths.push(path)
-            }
-          })
-          const finishedPolygons = this.createFinishedPolygons(paths)
-          this.setState({ finishedPolygons })
-          const extents = geojsonExtent(this.props.geoJSON)
-          const bounds = new maps.LatLngBounds(
-            { lng: extents[0], lat: extents[1] },
-            { lng: extents[2], lat: extents[3] }
-          )
-          map.fitBounds(bounds, {
-            top: 21,
-            bottom: 21,
-            left: 21,
-            right: 21
-          })
+      const { geoJSON } = this.props
+      if (geoJSON) {
+        try {
+          const paths = []
+          if (geoJSON.features && geoJSON.features.length) {
+            geoJSON.features.forEach(f => {
+              if (f.geometry.type === 'Polygon') {
+                const path = f.geometry.coordinates[0].map(([lng, lat]) => new LatLng(lat, lng))
+                paths.push(path)
+              }
+            })
+            const finishedPolygons = this.createFinishedPolygons(paths)
+            this.setState({ finishedPolygons })
+            const extents = geojsonExtent(this.props.geoJSON)
+            const bounds = new maps.LatLngBounds(
+              { lng: extents[0], lat: extents[1] },
+              { lng: extents[2], lat: extents[3] }
+            )
+            map.fitBounds(bounds, {
+              top: 21,
+              bottom: 21,
+              left: 21,
+              right: 21
+            })
+          }
+        } catch (e) {
+          console.error(e.message)
+          this.setState({ error: 'Could not parse GeoJSON :/' })
         }
-      } catch (e) {
-        console.error(e.message)
-        this.setState({ error: 'Could not parse GeoJSON :/' })
       }
-    }
+    })
   }
 
   componentWillUnmount () {
     document.addEventListener('keyup', this.handleKeyUp)
-    maps.event.clearInstanceListeners(this.map)
+    this.maps.event.clearInstanceListeners(this.map)
   }
 
   createFinishedPolygons (paths) {
     const { mapType, finishedPolygons: finishedPolygons0 } = this.state
     const finishedPolygons1 = finishedPolygons0.slice()
     paths.forEach(path => {
-      const polygon = new FinishedPolygon(this.map, path, mapType)
+      const polygon = new FinishedPolygon(this.maps, this.map, path, mapType)
       polygon.on('click', this.handlePolygonClick)
       finishedPolygons1.push(polygon)
     })
@@ -226,7 +232,7 @@ class Editor extends Component {
 
   handleCreatePolygon () {
     const { finishedPolygons, mapType } = this.state
-    const editingPolygon = new EditingPolygon(this.map, mapType)
+    const editingPolygon = new EditingPolygon(this.maps, this.map, mapType)
     editingPolygon.on('coordinateAdded', this.handleCoordinateAdded)
     editingPolygon.on('close', this.handleClose)
     finishedPolygons.forEach(p => {

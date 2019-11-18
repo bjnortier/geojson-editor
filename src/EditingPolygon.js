@@ -1,9 +1,8 @@
 import Polygon from './Polygon'
-const { maps } = window.google
 
 export default class EditingPolygon extends Polygon {
-  constructor (map, mapType) {
-    super(map, [{ lat: 0, lng: 0 }], mapType, 'pointer')
+  constructor (maps, map, mapType) {
+    super(maps, map, [{ lat: 0, lng: 0 }], mapType, 'pointer')
     this.handleMouseMove = this.handleMouseMove.bind(this)
     this.handleClick = this.handleClick.bind(this)
     this.handleMarkerClick = this.handleMarkerClick.bind(this)
@@ -52,7 +51,7 @@ export default class EditingPolygon extends Polygon {
 
     const lastMarker = this._mapMarkers[path.length - 1]
     if (lastMarker) {
-      maps.event.clearInstanceListeners(lastMarker)
+      this.maps.event.clearInstanceListeners(lastMarker)
       lastMarker.setMap(null)
       this._mapMarkers.pop()
     }
