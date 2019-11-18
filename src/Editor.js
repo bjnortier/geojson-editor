@@ -12,8 +12,7 @@ import {
 import EditingPolygon from './EditingPolygon'
 import FinishedPolygon from './FinishedPolygon'
 
-var GoogleMapsLoader = require('google-maps')
-GoogleMapsLoader.KEY = GOOGLE_MAPS_API_KEY // eslint-disable-line
+const GoogleMapsLoader = require('google-maps')
 GoogleMapsLoader.VERSION = '3.37'
 
 const Main = styled.div`
@@ -94,6 +93,7 @@ class Editor extends Component {
 
   componentDidMount () {
     document.addEventListener('keyup', this.handleKeyUp)
+    GoogleMapsLoader.KEY = this.props.googleMapsAPIKey
     GoogleMapsLoader.load(google => {
       const { maps } = google
       this.maps = maps
@@ -351,6 +351,7 @@ class Editor extends Component {
 }
 
 Editor.propTypes = {
+  googleMapsAPIKey: PropTypes.string.isRequired,
   toolbarExtension: PropTypes.oneOfType([PropTypes.array, PropTypes.object]),
   onGeoJSONChanged: PropTypes.func.isRequired,
   geoJSON: PropTypes.object
