@@ -1,5 +1,7 @@
 import EventEmitter from 'events'
 
+const { maps } = window.google
+
 const colorSchemes = {
   unselected: {
     hybrid: {
@@ -26,10 +28,9 @@ const colorSchemes = {
 }
 
 export default class Polygon extends EventEmitter {
-  constructor (maps, map, path, mapType, cursor) {
+  constructor (map, path, mapType, cursor) {
     super()
     this._id = Polygon.nextId++
-    this._maps = maps
     this._map = map
     this._mapType = mapType
     this._colorScheme = colorSchemes.unselected[mapType]
@@ -53,7 +54,7 @@ export default class Polygon extends EventEmitter {
   }
 
   addMarker (latLng, cursor) {
-    const marker = new this._maps.Marker({
+    const marker = new maps.Marker({
       position: latLng,
       sName: 'coordinate-0',
       map: this._map,
@@ -64,10 +65,10 @@ export default class Polygon extends EventEmitter {
   }
 
   remove () {
-    this._listeners.forEach(l => this._maps.event.removeListener(l))
+    this._listeners.forEach(l => maps.event.removeListener(l))
     this._mapPolygon.setMap(null)
     this._mapMarkers.forEach(marker => {
-      this._maps.event.clearInstanceListeners(marker)
+      maps.event.clearInstanceListeners(marker)
       marker.setMap(null)
     })
     this.removeAllListeners()
@@ -107,7 +108,7 @@ export default class Polygon extends EventEmitter {
 
   createIcon () {
     return {
-      path: this._maps.SymbolPath.CIRCLE,
+      path: maps.SymbolPath.CIRCLE,
       scale: 3,
       fillOpacity: 1,
       strokeWeight: 1,
