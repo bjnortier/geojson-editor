@@ -24,8 +24,6 @@ const Extension = styled.div`
   }
 `
 
-const mapsKey = GOOGLE_MAPS_API_KEY // eslint-disable-line
-
 class Test extends Component {
   constructor (props) {
     super(props)
@@ -83,7 +81,6 @@ class Test extends Component {
         <Editor
           key={iteration}
           geoJSON={geoJSON}
-          googleMapsAPIKey={mapsKey}
           toolbarExtension={<Extension><Button secondary label='Foo' onClick={() => {}} /></Extension>}
           onGeoJSONChanged={geoJSON => {
             this.setState({ geoJSON })

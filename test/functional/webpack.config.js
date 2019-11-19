@@ -26,12 +26,11 @@ module.exports = {
     }
   },
   plugins: [
-    new webpack.DefinePlugin({
-      GOOGLE_MAPS_API_KEY: JSON.stringify(process.env.GOOGLE_MAPS_API_KEY)
-    }),
     new webpack.HotModuleReplacementPlugin(),
     new HtmlWebpackPlugin({
-      templateParameters: {},
+      templateParameters: {
+        googleMapsAPIKey: process.env.GOOGLE_MAPS_API_KEY
+      },
       meta: {},
       template: './index.ejs'
     })
